@@ -48,18 +48,75 @@
             </Setter>
         </Style>
 
-        <Style x:Key="VerticalModeButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-            <Setter Property="Width" Value="126" />
-            <Setter Property="Height" Value="52" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="Padding" Value="13,8" />
+        <Style x:Key="FloatingModeButton" TargetType="Button">
+            <Setter Property="Height" Value="60" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="12,7" />
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ModeSurface"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ModeSurface" Property="Background" Value="{StaticResource BrandSoftBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource BrandBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ModeSurface" Property="Opacity" Value="0.82" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-        <Style x:Key="VerticalModeActiveButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
-            <Setter Property="Width" Value="126" />
-            <Setter Property="Height" Value="52" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="Padding" Value="13,8" />
+        <Style x:Key="FloatingModeActiveButton" TargetType="Button" BasedOn="{StaticResource FloatingModeButton}">
+            <Setter Property="Background" Value="{StaticResource BrandBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ModeSurface"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ModeSurface" Property="Background" Value="{StaticResource BrandHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ModeSurface" Property="Background" Value="{StaticResource BrandPressedBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ModeDescriptionText" TargetType="TextBlock">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="Opacity" Value="0.78" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMouseOver, ElementName=ModePanel}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=ModePanel}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <Style x:Key="DrawSurfaceButton" TargetType="Button">
@@ -72,18 +129,12 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="DrawSurface"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="0,16,16,0">
+                                CornerRadius="17">
                             <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="DrawSurface" Property="Background" Value="#24E7EDFF" />
-                            </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="DrawSurface" Property="Background" Value="#3DE0E8FF" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="DrawSurface" Property="Opacity" Value="0.55" />
+                                <Setter TargetName="DrawSurface" Property="Opacity" Value="0.97" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -102,146 +153,170 @@
         </Border.Effect>
 
         <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="166" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+            <!-- The draw surface owns the entire window. Floating controls sit above it. -->
+            <Button x:Name="DrawButton"
+                    Panel.ZIndex="0"
+                    Style="{StaticResource DrawSurfaceButton}"
+                    Click="DrawSurface_Click"
+                    PreviewMouseLeftButtonDown="DrawSurface_MouseLeftButtonDown"
+                    PreviewMouseMove="DrawSurface_MouseMove"
+                    PreviewMouseLeftButtonUp="DrawSurface_MouseLeftButtonUp"
+                    automation:AutomationProperties.Name="点击抽取或拖动窗口">
+                <Grid>
+                    <Grid.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#FFFFFF" Offset="0" />
+                            <GradientStop Color="#EFF3FF" Offset="1" />
+                        </LinearGradientBrush>
+                    </Grid.Background>
 
-            <Border Grid.Column="0"
-                    Background="#F4F6FA"
-                    BorderBrush="{StaticResource BorderBrush}"
-                    BorderThickness="0,0,1,0"
-                    CornerRadius="17,0,0,17">
-                <Grid Margin="19,18">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Margin="0,12,0,0">
-                        <TextBlock Text="抽取模式"
-                                   Margin="4,0,0,9"
-                                   FontSize="11"
-                                   Foreground="{StaticResource TextTertiaryBrush}" />
-
-                        <Button x:Name="IndependentModeButton"
-                                Style="{StaticResource VerticalModeButton}"
-                                Click="Independent_Click">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="27" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="&#xE8AB;" FontFamily="Segoe Fluent Icons" FontSize="15" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1" Text="独立随机" VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
-
-                        <Button x:Name="BalancedModeButton"
-                                Style="{StaticResource VerticalModeActiveButton}"
-                                Margin="0,9,0,0"
-                                Click="Balanced_Click">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="27" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="&#xE73E;" FontFamily="Segoe Fluent Icons" FontSize="15" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1" Text="均衡轮选" VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Margin="0,0,0,44">
+                        <TextBlock x:Name="HintText"
+                                   Text="点击显示区域开始"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="14" />
+                        <TextBlock x:Name="ResultNameText"
+                                   Text="点击抽取"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,15,0,0"
+                                   FontFamily="Microsoft YaHei UI"
+                                   FontSize="72"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   automation:AutomationProperties.LiveSetting="Assertive"
+                                   automation:AutomationProperties.Name="点名结果" />
+                        <TextBlock x:Name="ResultNumberText"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,9,0,0"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="17" />
                     </StackPanel>
 
-                    <StackPanel Grid.Row="2" Margin="4,0,0,3">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Bottom"
+                                Margin="0,0,0,46">
                         <TextBlock x:Name="ModeText"
-                                   FontSize="12"
+                                   FontSize="11"
                                    FontWeight="SemiBold"
                                    Foreground="{StaticResource BrandBrush}" />
+                        <TextBlock Text="  ·  " FontSize="11" Foreground="{StaticResource TextTertiaryBrush}" />
                         <TextBlock x:Name="RemainingText"
-                                   Margin="0,4,0,0"
                                    FontSize="11"
-                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                   TextWrapping="Wrap" />
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
                     </StackPanel>
+
+                    <TextBlock Text="点击抽取，拖动移动窗口"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Bottom"
+                               Margin="0,0,0,24"
+                               FontSize="10.5"
+                               Foreground="{StaticResource TextTertiaryBrush}" />
                 </Grid>
+            </Button>
+
+            <Border x:Name="ModePanel"
+                    Panel.ZIndex="10"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Margin="18,0,0,0"
+                    Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="14"
+                    ClipToBounds="True"
+                    KeyboardNavigation.TabNavigation="Cycle">
+                <Border.Effect>
+                    <DropShadowEffect Color="#2E4568" BlurRadius="18" ShadowDepth="3" Opacity="0.18" />
+                </Border.Effect>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Width" Value="56" />
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Width" Value="194" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter Property="Width" Value="194" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+
+                <StackPanel>
+                    <Button x:Name="IndependentModeButton"
+                            Style="{StaticResource FloatingModeButton}"
+                            Click="Independent_Click">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="31" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE8AB;"
+                                       FontFamily="Segoe Fluent Icons"
+                                       FontSize="16"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Margin="9,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="独立随机" FontSize="12.5" FontWeight="SemiBold" />
+                                <TextBlock Text="每次从完整名单抽取" Style="{StaticResource ModeDescriptionText}" />
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+
+                    <Button x:Name="BalancedModeButton"
+                            Style="{StaticResource FloatingModeActiveButton}"
+                            Click="Balanced_Click">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="31" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE73E;"
+                                       FontFamily="Segoe Fluent Icons"
+                                       FontSize="16"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Margin="9,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="均衡轮选" FontSize="12.5" FontWeight="SemiBold" />
+                                <TextBlock Text="一轮内不重复" Style="{StaticResource ModeDescriptionText}" />
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+                </StackPanel>
             </Border>
 
-            <Grid Grid.Column="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="56" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <Grid Grid.Row="0">
-                    <Border Background="Transparent" MouseLeftButtonDown="WindowDrag_MouseLeftButtonDown" />
-                    <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Center"
-                                Margin="0,0,14,0">
-                        <Button Style="{StaticResource IconButton}"
-                                Margin="0,0,3,0"
-                                ToolTip="重置本轮"
-                                Click="Reset_Click"
-                                automation:AutomationProperties.Name="重置本轮">
-                            <TextBlock Text="&#xE72C;" FontFamily="Segoe Fluent Icons" FontSize="17" />
-                        </Button>
-                        <Button Style="{StaticResource IconButton}"
-                                ToolTip="退出点名"
-                                Click="Close_Click"
-                                automation:AutomationProperties.Name="退出点名">
-                            <TextBlock Text="&#xE8BB;" FontFamily="Segoe Fluent Icons" FontSize="15" />
-                        </Button>
-                    </StackPanel>
-                </Grid>
-
-                <Button x:Name="DrawButton"
-                        Grid.Row="1"
-                        Style="{StaticResource DrawSurfaceButton}"
-                        Click="Draw_Click"
-                        automation:AutomationProperties.Name="点击中央区域抽取成员">
-                    <Grid>
-                        <Grid.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#FFFFFF" Offset="0" />
-                                <GradientStop Color="#EFF3FF" Offset="1" />
-                            </LinearGradientBrush>
-                        </Grid.Background>
-
-                        <StackPanel HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Margin="38,0,38,48">
-                            <TextBlock x:Name="HintText"
-                                       Text="点击中央区域开始"
-                                       HorizontalAlignment="Center"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       FontSize="14" />
-                            <TextBlock x:Name="ResultNameText"
-                                       Text="点击抽取"
-                                       HorizontalAlignment="Center"
-                                       Margin="0,15,0,0"
-                                       FontFamily="Microsoft YaHei UI"
-                                       FontSize="72"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextPrimaryBrush}"
-                                       automation:AutomationProperties.LiveSetting="Assertive"
-                                       automation:AutomationProperties.Name="点名结果" />
-                            <TextBlock x:Name="ResultNumberText"
-                                       HorizontalAlignment="Center"
-                                       Margin="0,9,0,0"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       FontSize="17" />
-                        </StackPanel>
-
-                        <TextBlock Text="点击任意空白区域抽取下一位"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Bottom"
-                                   Margin="0,0,0,25"
-                                   FontSize="11"
-                                   Foreground="{StaticResource TextTertiaryBrush}" />
-                    </Grid>
-                </Button>
-            </Grid>
+            <Border Panel.ZIndex="10"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,16,16,0"
+                    Padding="2"
+                    Background="#F5FFFFFF"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                <Border.Effect>
+                    <DropShadowEffect Color="#2E4568" BlurRadius="16" ShadowDepth="3" Opacity="0.16" />
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource IconButton}"
+                            Margin="0,0,2,0"
+                            ToolTip="重置本轮"
+                            Click="Reset_Click"
+                            automation:AutomationProperties.Name="重置本轮">
+                        <TextBlock Text="&#xE72C;" FontFamily="Segoe Fluent Icons" FontSize="17" />
+                    </Button>
+                    <Button Style="{StaticResource IconButton}"
+                            ToolTip="退出点名"
+                            Click="Close_Click"
+                            automation:AutomationProperties.Name="退出点名">
+                        <TextBlock Text="&#xE8BB;" FontFamily="Segoe Fluent Icons" FontSize="15" />
+                    </Button>
+                </StackPanel>
+            </Border>
         </Grid>
     </Border>
 </Window>
