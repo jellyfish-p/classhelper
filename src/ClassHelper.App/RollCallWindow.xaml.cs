@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media.Animation;
 using ClassHelper.App.ViewModels;
 using ClassHelper.Core.RollCall;
@@ -28,8 +29,8 @@ public partial class RollCallWindow : Window
             _session = new RollCallSession(_workspace.Data.Roster, _mode);
             DrawButton.IsEnabled = true;
             ModeText.Text = _mode == RollCallMode.IndependentRandom ? "独立随机" : "均衡轮选";
-            HintText.Text = "准备好后开始抽取";
-            ResultNameText.Text = "等待抽取";
+            HintText.Text = "点击中央区域开始";
+            ResultNameText.Text = "点击抽取";
             ResultNumberText.Text = string.Empty;
             RefreshRemaining();
         }
@@ -81,7 +82,7 @@ public partial class RollCallWindow : Window
     {
         _session?.ResetRound();
         HintText.Text = "本轮已重置";
-        ResultNameText.Text = "等待抽取";
+        ResultNameText.Text = "点击抽取";
         ResultNumberText.Text = string.Empty;
         RefreshRemaining();
     }
@@ -89,9 +90,9 @@ public partial class RollCallWindow : Window
     private void ApplyModeStyles()
     {
         IndependentModeButton.Style = (Style)FindResource(
-            _mode == RollCallMode.IndependentRandom ? "ModeActiveButton" : "ModeInactiveButton");
+            _mode == RollCallMode.IndependentRandom ? "VerticalModeActiveButton" : "VerticalModeButton");
         BalancedModeButton.Style = (Style)FindResource(
-            _mode == RollCallMode.BalancedRound ? "ModeActiveButton" : "ModeInactiveButton");
+            _mode == RollCallMode.BalancedRound ? "VerticalModeActiveButton" : "VerticalModeButton");
     }
 
     private void RefreshRemaining()
@@ -107,4 +108,12 @@ public partial class RollCallWindow : Window
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void WindowDrag_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton == MouseButton.Left)
+        {
+            DragMove();
+        }
+    }
 }

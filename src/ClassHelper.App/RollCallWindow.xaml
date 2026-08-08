@@ -3,102 +3,245 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationCore"
         Title="随机点名"
-        Width="940"
-        Height="560"
-        MinWidth="780"
-        MinHeight="500"
+        Width="900"
+        Height="540"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="True"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource CanvasBrush}"
         Topmost="True">
-    <Grid Margin="32,28,32,30">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <Window.Resources>
+        <Style x:Key="IconButton" TargetType="Button">
+            <Setter Property="Width" Value="38" />
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="IconSurface"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="10"
+                                RenderTransformOrigin="0.5,0.5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="IconSurface" Property="Background" Value="#E7EBF2" />
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="IconSurface" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.94" ScaleY="0.94" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="VerticalModeButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+            <Setter Property="Width" Value="126" />
+            <Setter Property="Height" Value="52" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="13,8" />
+        </Style>
+
+        <Style x:Key="VerticalModeActiveButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Width" Value="126" />
+            <Setter Property="Height" Value="52" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="13,8" />
+        </Style>
+
+        <Style x:Key="DrawSurfaceButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="DrawSurface"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="0,16,16,0">
+                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="DrawSurface" Property="Background" Value="#24E7EDFF" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="DrawSurface" Property="Background" Value="#3DE0E8FF" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="DrawSurface" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Margin="14"
+            Background="{StaticResource SurfaceBrush}"
+            BorderBrush="#D5DCE7"
+            BorderThickness="1"
+            CornerRadius="18">
+        <Border.Effect>
+            <DropShadowEffect Color="#263A59" BlurRadius="28" ShadowDepth="6" Opacity="0.22" />
+        </Border.Effect>
 
         <Grid>
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="166" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel>
-                <TextBlock Text="随机点名" FontSize="24" FontWeight="SemiBold" />
-                <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
-                    <TextBlock x:Name="ModeText" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrandBrush}" />
-                    <TextBlock Text="  ·  " FontSize="12" Foreground="{StaticResource TextTertiaryBrush}" />
-                    <TextBlock x:Name="RemainingText" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
-                </StackPanel>
-            </StackPanel>
-            <Button Grid.Column="1"
-                    Style="{StaticResource QuietButton}"
-                    Content="结束点名"
-                    VerticalAlignment="Top"
-                    Click="Close_Click" />
-        </Grid>
 
-        <Border Grid.Row="1"
-                Margin="0,24,0,22"
-                BorderBrush="#C8D4F1"
-                BorderThickness="1"
-                CornerRadius="18">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#F8FAFF" Offset="0" />
-                    <GradientStop Color="#E8EEFF" Offset="1" />
-                </LinearGradientBrush>
-            </Border.Background>
-            <Grid>
-                <Border Width="4" Height="88" CornerRadius="2" Background="{StaticResource BrandBrush}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="28,0,0,0" />
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="90,24">
-                    <TextBlock x:Name="HintText"
-                               Text="准备好后开始抽取"
-                               HorizontalAlignment="Center"
-                               Foreground="{StaticResource TextSecondaryBrush}"
-                               FontSize="14" />
-                    <TextBlock x:Name="ResultNameText"
-                               Text="等待抽取"
-                               HorizontalAlignment="Center"
-                               Margin="0,15,0,0"
-                               FontFamily="Microsoft YaHei UI"
-                               FontSize="70"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}"
-                               automation:AutomationProperties.LiveSetting="Assertive"
-                               automation:AutomationProperties.Name="点名结果" />
-                    <TextBlock x:Name="ResultNumberText"
-                               HorizontalAlignment="Center"
-                               Margin="0,9,0,0"
-                               Foreground="{StaticResource TextSecondaryBrush}"
-                               FontSize="17" />
-                </StackPanel>
-            </Grid>
-        </Border>
+            <Border Grid.Column="0"
+                    Background="#F4F6FA"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="0,0,1,0"
+                    CornerRadius="17,0,0,17">
+                <Grid Margin="19,18">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-        <Grid Grid.Row="2">
-            <StackPanel Orientation="Horizontal">
-                <Button x:Name="IndependentModeButton"
-                        Style="{StaticResource ModeInactiveButton}"
-                        Content="独立随机"
-                        Margin="0,0,8,0"
-                        Click="Independent_Click" />
-                <Button x:Name="BalancedModeButton"
-                        Style="{StaticResource ModeActiveButton}"
-                        Content="均衡轮选"
-                        Click="Balanced_Click" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Style="{StaticResource SecondaryButton}"
-                        Content="重置本轮"
-                        Margin="0,0,10,0"
-                        Click="Reset_Click" />
+                    <StackPanel Grid.Row="0" Margin="0,12,0,0">
+                        <TextBlock Text="抽取模式"
+                                   Margin="4,0,0,9"
+                                   FontSize="11"
+                                   Foreground="{StaticResource TextTertiaryBrush}" />
+
+                        <Button x:Name="IndependentModeButton"
+                                Style="{StaticResource VerticalModeButton}"
+                                Click="Independent_Click">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="27" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="&#xE8AB;" FontFamily="Segoe Fluent Icons" FontSize="15" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="独立随机" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+
+                        <Button x:Name="BalancedModeButton"
+                                Style="{StaticResource VerticalModeActiveButton}"
+                                Margin="0,9,0,0"
+                                Click="Balanced_Click">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="27" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="&#xE73E;" FontFamily="Segoe Fluent Icons" FontSize="15" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="均衡轮选" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Margin="4,0,0,3">
+                        <TextBlock x:Name="ModeText"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource BrandBrush}" />
+                        <TextBlock x:Name="RemainingText"
+                                   Margin="0,4,0,0"
+                                   FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="56" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0">
+                    <Border Background="Transparent" MouseLeftButtonDown="WindowDrag_MouseLeftButtonDown" />
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Margin="0,0,14,0">
+                        <Button Style="{StaticResource IconButton}"
+                                Margin="0,0,3,0"
+                                ToolTip="重置本轮"
+                                Click="Reset_Click"
+                                automation:AutomationProperties.Name="重置本轮">
+                            <TextBlock Text="&#xE72C;" FontFamily="Segoe Fluent Icons" FontSize="17" />
+                        </Button>
+                        <Button Style="{StaticResource IconButton}"
+                                ToolTip="退出点名"
+                                Click="Close_Click"
+                                automation:AutomationProperties.Name="退出点名">
+                            <TextBlock Text="&#xE8BB;" FontFamily="Segoe Fluent Icons" FontSize="15" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
                 <Button x:Name="DrawButton"
-                        Style="{StaticResource PrimaryButton}"
-                        Content="抽一位"
-                        MinWidth="132"
+                        Grid.Row="1"
+                        Style="{StaticResource DrawSurfaceButton}"
                         Click="Draw_Click"
-                        automation:AutomationProperties.Name="抽一位成员" />
-            </StackPanel>
+                        automation:AutomationProperties.Name="点击中央区域抽取成员">
+                    <Grid>
+                        <Grid.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#FFFFFF" Offset="0" />
+                                <GradientStop Color="#EFF3FF" Offset="1" />
+                            </LinearGradientBrush>
+                        </Grid.Background>
+
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Margin="38,0,38,48">
+                            <TextBlock x:Name="HintText"
+                                       Text="点击中央区域开始"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="14" />
+                            <TextBlock x:Name="ResultNameText"
+                                       Text="点击抽取"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,15,0,0"
+                                       FontFamily="Microsoft YaHei UI"
+                                       FontSize="72"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       automation:AutomationProperties.LiveSetting="Assertive"
+                                       automation:AutomationProperties.Name="点名结果" />
+                            <TextBlock x:Name="ResultNumberText"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,9,0,0"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="17" />
+                        </StackPanel>
+
+                        <TextBlock Text="点击任意空白区域抽取下一位"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Bottom"
+                                   Margin="0,0,0,25"
+                                   FontSize="11"
+                                   Foreground="{StaticResource TextTertiaryBrush}" />
+                    </Grid>
+                </Button>
+            </Grid>
         </Grid>
-    </Grid>
+    </Border>
 </Window>
