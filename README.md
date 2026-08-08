@@ -38,6 +38,19 @@ dotnet run --project src/ClassHelper.App/ClassHelper.App.csproj
 dotnet run --project src/ClassHelper.App/ClassHelper.App.csproj -- --smoke-test
 ```
 
+### 自动构建与发布
+
+GitHub Actions 会在分支推送和 Pull Request 时自动执行格式检查、Release 构建、测试及 WPF 冒烟验证。
+
+发布版本使用严格的 `v主版本.次版本.修订版本` 标签，例如：
+
+```powershell
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+推送标签后会自动创建 GitHub Release，并附带可直接运行的 Windows x64 自包含 ZIP 和 SHA-256 校验文件。也可以先在 GitHub 中发布同格式标签的 Release，工作流会自动构建并补充产物；失败时可从 Actions 页面输入已有标签手动重跑。
+
 ## 设计文档
 
 - [领域词汇表](./CONTEXT.md)
