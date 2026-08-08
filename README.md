@@ -59,7 +59,7 @@ v0.1.0-rc.1
 v0.1.0-rc.1+build.42
 ```
 
-包含先行版本标识符的标签会自动发布为 GitHub Prerelease。工作流会拒绝 `v01.2.3`、`v1.2`、`v1.2.3-rc.01` 等不符合 SemVer 的标签。
+Alpha、Beta 和 Preview 标签会发布为 GitHub Prerelease；RC 标签和无后缀稳定版会显示为普通 GitHub Release。RC 在客户端更新策略中仍属于“预发行”通道，不会推送给只接收 Stable 的用户。工作流会拒绝 `v01.2.3`、`v1.2`、`v1.2.3-rc.01` 等不符合 SemVer 的标签。
 
 推送标签后会通过 GitHub Actions 原生矩阵生成六种单文件 EXE：`win-x64`、`win-x86`、`win-arm64` 分别提供内含 .NET 的自包含版和需要预装 .NET 10 Desktop Runtime 的框架依赖版。Release 同时包含每个 EXE 的 SHA-256 校验文件，以及供客户端检查更新的 `update-manifest.json`。
 

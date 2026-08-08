@@ -20,6 +20,7 @@
 - 每用户开机自启；
 - Alpha、Beta、预发行和稳定版更新通道，支持启动时自动检查；
 - GitHub Release 六目标发布矩阵和自动生成的 JSON 更新清单；
+- RC 在 GitHub 中作为普通 Release 展示，但在客户端仍按预发行通道筛选；
 - JSON 数据以临时文件写入后原子替换；
 - `--smoke-test` 检查 WPF XAML 能否加载；
 - 点名、名单导入、吸边、SemVer 和更新通道策略共 37 个自动测试。

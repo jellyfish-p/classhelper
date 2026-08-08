@@ -33,7 +33,7 @@ jobs:
       tag: ${{ steps.version.outputs.tag }}
       version: ${{ steps.version.outputs.version }}
       channel: ${{ steps.version.outputs.channel }}
-      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+      is_github_prerelease: ${{ steps.version.outputs.is_github_prerelease }}
 
     steps:
       - name: Validate SemVer tag and determine channel
@@ -50,13 +50,16 @@ jobs:
 
           $prerelease = $Matches[4]
           $isPrerelease = -not [string]::IsNullOrEmpty($prerelease)
+          $firstIdentifier = if ($isPrerelease) { $prerelease.Split('.')[0] } else { "" }
+          $isReleaseCandidate = $isPrerelease -and $firstIdentifier -match '^rc'
+          $isGitHubPrerelease = $isPrerelease -and -not $isReleaseCandidate
           $channel = if (-not $isPrerelease) {
             "stable"
           }
-          elseif ($prerelease.Split('.')[0] -match '^alpha') {
+          elseif ($firstIdentifier -match '^alpha') {
             "alpha"
           }
-          elseif ($prerelease.Split('.')[0] -match '^beta') {
+          elseif ($firstIdentifier -match '^beta') {
             "beta"
           }
           else {
@@ -66,7 +69,7 @@ jobs:
           "tag=$env:REQUESTED_TAG" >> $env:GITHUB_OUTPUT
           "version=$($env:REQUESTED_TAG.Substring(1))" >> $env:GITHUB_OUTPUT
           "channel=$channel" >> $env:GITHUB_OUTPUT
-          "is_prerelease=$($isPrerelease.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          "is_github_prerelease=$($isGitHubPrerelease.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
   verify:
     name: Verify release source
@@ -269,7 +272,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
           RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
-          IS_PRERELEASE: ${{ needs.prepare.outputs.is_prerelease }}
+          IS_PRERELEASE: ${{ needs.prepare.outputs.is_github_prerelease }}
         run: |
           gh release view $env:RELEASE_TAG *> $null
           $releaseExists = $LASTEXITCODE -eq 0
