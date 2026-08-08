@@ -329,9 +329,14 @@
                         <Grid>
                             <StackPanel>
                                 <TextBlock Text="固定名单" Style="{StaticResource PageTitle}" />
-                                <TextBlock Text="姓名必填，学号或座号可选。" Margin="0,3,0,0" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="姓名必填；可粘贴文本，或从 XLSX / CSV 文件智能导入。" Margin="0,3,0,0" Style="{StaticResource BodyText}" />
                             </StackPanel>
                             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Style="{StaticResource SecondaryButton}"
+                                        Content="导入文件"
+                                        Margin="0,0,10,0"
+                                        Click="ImportRosterFile_Click"
+                                        automation:AutomationProperties.Name="导入 XLSX 或 CSV 名单" />
                                 <Button Style="{StaticResource SecondaryButton}" Content="新增成员" Margin="0,0,10,0" Click="AddMember_Click" />
                                 <Button Style="{StaticResource PrimaryButton}" Content="保存名单" Click="SaveRoster_Click" />
                             </StackPanel>

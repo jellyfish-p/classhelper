@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ClassHelper.Core.RollCall;
+using ClassHelper.Core.RosterImport;
 
 namespace ClassHelper.App.ViewModels;
 
@@ -75,6 +76,26 @@ public sealed class MainViewModel : ObservableObject
 
         OnPropertyChanged(nameof(RosterSummary));
         StatusMessage = $"已预览 {parsed.Count} 名成员，请确认后保存";
+    }
+
+    public void ImportRosterMembers(IEnumerable<ImportedRosterMember> importedMembers, string sourceName)
+    {
+        var members = importedMembers
+            .Select(member => new RosterMemberRow(
+                Guid.NewGuid(),
+                member.Name,
+                member.Number,
+                member.IsActive))
+            .ToList();
+
+        Roster.Clear();
+        foreach (var member in members)
+        {
+            Roster.Add(member);
+        }
+
+        OnPropertyChanged(nameof(RosterSummary));
+        StatusMessage = $"已从 {sourceName} 导入预览 {members.Count} 人，请确认后保存";
     }
 
     public void RefreshOverview()

@@ -1,0 +1,147 @@
+<Window x:Class="ClassHelper.App.RosterImportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationCore"
+        Title="导入名单"
+        Width="780"
+        Height="650"
+        MinWidth="700"
+        MinHeight="570"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{StaticResource CanvasBrush}">
+    <Window.Resources>
+        <Style x:Key="MappingComboBox" TargetType="ComboBox">
+            <Setter Property="MinHeight" Value="38" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontSize" Value="12.5" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="28,24,28,22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="48" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Width="40" Height="40" CornerRadius="11" Background="{StaticResource BrandSoftBrush}">
+                <TextBlock Text="&#xE8B5;"
+                           FontFamily="Segoe Fluent Icons"
+                           FontSize="18"
+                           Foreground="{StaticResource BrandBrush}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+            </Border>
+            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="导入预览" FontSize="22" FontWeight="SemiBold" />
+                <TextBlock x:Name="SourceText" Margin="0,3,0,0" Style="{StaticResource BodyText}" />
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="1"
+                Margin="0,20,0,14"
+                Padding="16"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="姓名列" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="1,0,0,6" />
+                    <ComboBox x:Name="NameColumnBox"
+                              Style="{StaticResource MappingComboBox}"
+                              DisplayMemberPath="DisplayName"
+                              SelectedValuePath="Index"
+                              SelectionChanged="Mapping_SelectionChanged"
+                              automation:AutomationProperties.Name="姓名列" />
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="学号 / 座号列" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="1,0,0,6" />
+                    <ComboBox x:Name="NumberColumnBox"
+                              Style="{StaticResource MappingComboBox}"
+                              DisplayMemberPath="DisplayName"
+                              SelectedValuePath="Index"
+                              SelectionChanged="Mapping_SelectionChanged"
+                              automation:AutomationProperties.Name="学号或座号列" />
+                </StackPanel>
+                <StackPanel Grid.Column="4">
+                    <TextBlock Text="参与状态列" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="1,0,0,6" />
+                    <ComboBox x:Name="ActiveColumnBox"
+                              Style="{StaticResource MappingComboBox}"
+                              DisplayMemberPath="DisplayName"
+                              SelectedValuePath="Index"
+                              SelectionChanged="Mapping_SelectionChanged"
+                              automation:AutomationProperties.Name="参与状态列" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2" Margin="2,0,2,10">
+            <TextBlock x:Name="RecognitionText" Style="{StaticResource BodyText}" VerticalAlignment="Center" />
+            <TextBlock x:Name="CountText"
+                       HorizontalAlignment="Right"
+                       Foreground="{StaticResource BrandBrush}"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center" />
+        </Grid>
+
+        <Border Grid.Row="3"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12">
+            <DataGrid x:Name="PreviewGrid"
+                      Style="{StaticResource RosterDataGrid}"
+                      IsReadOnly="True"
+                      automation:AutomationProperties.Name="名单导入预览">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="来源行" Binding="{Binding SourceRowNumber}" Width="84" />
+                    <DataGridTextColumn Header="姓名" Binding="{Binding Name}" Width="2*" />
+                    <DataGridTextColumn Header="学号 / 座号" Binding="{Binding Number}" Width="*" />
+                    <DataGridCheckBoxColumn Header="参与点名" Binding="{Binding IsActive}" Width="105" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <Grid Grid.Row="4" Margin="0,16,0,0">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock x:Name="WarningText"
+                           MaxWidth="450"
+                           FontSize="11"
+                           Foreground="{StaticResource DangerBrush}"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="确认后替换当前编辑区；点击主页面“保存名单”后才会写入本机。"
+                           Margin="0,4,0,0"
+                           FontSize="10.5"
+                           Foreground="{StaticResource TextTertiaryBrush}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <Button Style="{StaticResource SecondaryButton}" Content="取消" MinWidth="82" Click="Cancel_Click" />
+                <Button x:Name="ConfirmButton"
+                        Margin="10,0,0,0"
+                        Style="{StaticResource PrimaryButton}"
+                        MinWidth="130"
+                        Click="Confirm_Click"
+                        automation:AutomationProperties.Name="确认导入" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
