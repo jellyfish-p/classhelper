@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing release tag, for example v0.1.0
+        description: Existing SemVer tag, for example v0.1.0-rc.1
         required: true
         type: string
 
@@ -37,12 +37,16 @@ jobs:
         env:
           REQUESTED_TAG: ${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
         run: |
-          if ($env:REQUESTED_TAG -notmatch '^v\d+\.\d+\.\d+$') {
-            throw "Release tag '$env:REQUESTED_TAG' must use the exact vMAJOR.MINOR.PATCH format."
+          $semVerPattern = '^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$'
+
+          if (-not ($env:REQUESTED_TAG -cmatch $semVerPattern)) {
+            throw "Release tag '$env:REQUESTED_TAG' must be 'v' followed by a valid SemVer 2.0.0 version."
           }
 
+          $isPrerelease = -not [string]::IsNullOrEmpty($Matches[4])
           "RELEASE_TAG=$env:REQUESTED_TAG" >> $env:GITHUB_ENV
           "VERSION=$($env:REQUESTED_TAG.Substring(1))" >> $env:GITHUB_ENV
+          "IS_PRERELEASE=$($isPrerelease.ToString().ToLowerInvariant())" >> $env:GITHUB_ENV
 
       - name: Check out release tag
         uses: actions/checkout@v6
@@ -118,12 +122,30 @@ jobs:
 
           if ($releaseExists) {
             gh release upload $env:RELEASE_TAG $env:ARCHIVE_PATH $env:CHECKSUM_PATH --clobber
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to upload assets to GitHub Release '$env:RELEASE_TAG'."
+            }
+
+            $prereleaseFlag = "--prerelease=$env:IS_PRERELEASE"
+            gh release edit $env:RELEASE_TAG $prereleaseFlag
           }
           else {
-            gh release create $env:RELEASE_TAG $env:ARCHIVE_PATH $env:CHECKSUM_PATH `
-              --verify-tag `
-              --generate-notes `
-              --title "ClassHelper $env:VERSION"
+            $releaseArguments = @(
+              "release", "create",
+              $env:RELEASE_TAG,
+              $env:ARCHIVE_PATH,
+              $env:CHECKSUM_PATH,
+              "--verify-tag",
+              "--generate-notes",
+              "--title", "ClassHelper $env:VERSION"
+            )
+
+            if ($env:IS_PRERELEASE -eq "true") {
+              $releaseArguments += "--prerelease"
+            }
+
+            gh @releaseArguments
           }
 
           if ($LASTEXITCODE -ne 0) {

@@ -42,12 +42,23 @@ dotnet run --project src/ClassHelper.App/ClassHelper.App.csproj -- --smoke-test
 
 GitHub Actions 会在分支推送和 Pull Request 时自动执行格式检查、Release 构建、测试及 WPF 冒烟验证。
 
-发布版本使用严格的 `v主版本.次版本.修订版本` 标签，例如：
+发布标签使用完整的 [SemVer 2.0.0](https://semver.org/lang/zh-CN/) 格式，并在版本号前添加 `v`。正式版本例如：
 
 ```powershell
 git tag v0.1.0
 git push origin v0.1.0
 ```
+
+先行版本和构建元数据同样受支持：
+
+```text
+v0.1.0-alpha.1
+v0.1.0-beta.2
+v0.1.0-rc.1
+v0.1.0-rc.1+build.42
+```
+
+包含先行版本标识符的标签会自动发布为 GitHub Prerelease。工作流会拒绝 `v01.2.3`、`v1.2`、`v1.2.3-rc.01` 等不符合 SemVer 的标签。
 
 推送标签后会自动创建 GitHub Release，并附带可直接运行的 Windows x64 自包含 ZIP 和 SHA-256 校验文件。也可以先在 GitHub 中发布同格式标签的 Release，工作流会自动构建并补充产物；失败时可从 Actions 页面输入已有标签手动重跑。
 
