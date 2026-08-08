@@ -102,7 +102,7 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE713;" FontFamily="Segoe Fluent Icons" FontSize="16" VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="1" Text="启动设置" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="设置" VerticalAlignment="Center" />
                         </Grid>
                     </RadioButton>
 
@@ -451,8 +451,8 @@
                 <TabItem>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="38,32,38,38" MaxWidth="820" HorizontalAlignment="Left">
-                            <TextBlock Text="启动设置" Style="{StaticResource PageTitle}" />
-                            <TextBlock Text="管理快捷启动器和 Windows 登录启动行为。" Margin="0,3,0,28" Style="{StaticResource BodyText}" />
+                            <TextBlock Text="设置" Style="{StaticResource PageTitle}" />
+                            <TextBlock Text="管理启动行为、更新通道和版本检查。" Margin="0,3,0,28" Style="{StaticResource BodyText}" />
 
                             <Border Style="{StaticResource CardBorder}" Padding="0">
                                 <StackPanel>
@@ -493,6 +493,82 @@
                                     </Grid>
                                 </StackPanel>
                             </Border>
+
+                            <TextBlock Text="软件更新" Margin="0,30,0,12" Style="{StaticResource SectionTitle}" />
+                            <Border Style="{StaticResource CardBorder}" Padding="0">
+                                <StackPanel>
+                                    <Grid Margin="22">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="44" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="270" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="36" Height="36" CornerRadius="10" Background="{StaticResource BrandSoftBrush}" VerticalAlignment="Top">
+                                            <TextBlock Text="&#xE895;" FontFamily="Segoe Fluent Icons" FontSize="16" Foreground="{StaticResource BrandBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="12,0,24,0">
+                                            <TextBlock Text="接收通道" Style="{StaticResource SectionTitle}" />
+                                            <TextBlock Text="选择的通道会同时接收其下方更稳定的版本。首次运行跟随当前安装版本。" Margin="0,4,0,0" Style="{StaticResource BodyText}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <ComboBox x:Name="UpdateChannelComboBox"
+                                                  Grid.Column="2"
+                                                  MinHeight="40"
+                                                  Padding="10,6"
+                                                  DisplayMemberPath="Label"
+                                                  SelectedValuePath="Value"
+                                                  SelectionChanged="UpdateSettings_Changed"
+                                                  VerticalAlignment="Center"
+                                                  automation:AutomationProperties.Name="更新通道" />
+                                    </Grid>
+                                    <Border Height="1" Background="{StaticResource BorderBrush}" />
+                                    <Grid Margin="22">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="44" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="36" Height="36" CornerRadius="10" Background="{StaticResource BrandSoftBrush}">
+                                            <TextBlock Text="&#xE823;" FontFamily="Segoe Fluent Icons" FontSize="16" Foreground="{StaticResource BrandBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="12,0,24,0">
+                                            <TextBlock Text="启动时检查更新" Style="{StaticResource SectionTitle}" />
+                                            <TextBlock Text="只读取公开的 GitHub Release，不上传名单、设置或设备信息。" Margin="0,4,0,0" Style="{StaticResource BodyText}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <CheckBox x:Name="AutoCheckUpdatesCheckBox"
+                                                  Grid.Column="2"
+                                                  Style="{StaticResource SwitchCheckBox}"
+                                                  VerticalAlignment="Center"
+                                                  Checked="AutoCheckUpdates_Changed"
+                                                  Unchecked="AutoCheckUpdates_Changed"
+                                                  automation:AutomationProperties.Name="启动时检查更新" />
+                                    </Grid>
+                                    <Border Height="1" Background="{StaticResource BorderBrush}" />
+                                    <Grid Margin="22">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="UpdateStatusText"
+                                                   Style="{StaticResource BodyText}"
+                                                   TextWrapping="Wrap"
+                                                   VerticalAlignment="Center" />
+                                        <Button x:Name="DownloadUpdateButton"
+                                                Grid.Column="1"
+                                                Margin="12,0,0,0"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Content="下载更新"
+                                                Visibility="Collapsed"
+                                                Click="DownloadUpdate_Click" />
+                                        <Button x:Name="CheckForUpdatesButton"
+                                                Grid.Column="2"
+                                                Margin="12,0,0,0"
+                                                Style="{StaticResource SecondaryButton}"
+                                                Content="检查更新"
+                                                Click="CheckForUpdates_Click" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
@@ -512,7 +588,7 @@
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="14,0,0,0">
                                         <TextBlock Text="ClassHelper" FontSize="20" FontWeight="SemiBold" />
-                                        <TextBlock Text="0.1 Preview" Margin="0,3,0,0" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding CurrentVersionDisplay}" Margin="0,3,0,0" Foreground="{StaticResource TextSecondaryBrush}" />
                                         <TextBlock Text="面向教室固定电脑的本地名单与随机点名工具。"
                                                    Margin="0,16,0,0"
                                                    Style="{StaticResource BodyText}"

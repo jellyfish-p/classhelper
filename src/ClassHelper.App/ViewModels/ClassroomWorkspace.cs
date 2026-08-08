@@ -1,5 +1,6 @@
 using ClassHelper.App.Services;
 using ClassHelper.Core.RollCall;
+using ClassHelper.Core.Updates;
 
 namespace ClassHelper.App.ViewModels;
 
@@ -23,6 +24,13 @@ public sealed class ClassroomWorkspace
     {
         Data.Roster.Clear();
         Data.Roster.AddRange(members);
+        await SaveAndNotifyAsync();
+    }
+
+    public async Task SaveUpdatePreferencesAsync(UpdateChannel channel, bool checkOnStartup)
+    {
+        Data.Updates.Channel = channel;
+        Data.Updates.CheckOnStartup = checkOnStartup;
         await SaveAndNotifyAsync();
     }
 

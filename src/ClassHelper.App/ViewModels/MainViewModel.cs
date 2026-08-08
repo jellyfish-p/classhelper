@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
+using ClassHelper.App.Services;
 using ClassHelper.Core.RollCall;
 using ClassHelper.Core.RosterImport;
+using ClassHelper.Core.Updates;
 
 namespace ClassHelper.App.ViewModels;
 
@@ -8,12 +10,17 @@ public sealed class MainViewModel : ObservableObject
 {
     private readonly ClassroomWorkspace _workspace;
     private string _statusMessage = "所有更改保存在本机";
+    private UpdateChannel _updateChannel;
+    private bool _checkUpdatesOnStartup;
 
     public MainViewModel(ClassroomWorkspace workspace)
     {
         _workspace = workspace;
         Roster = new ObservableCollection<RosterMemberRow>(workspace.Data.Roster.Select(RosterMemberRow.FromModel));
         DateLabel = CreateDateLabel();
+        _updateChannel = workspace.Data.Updates.Channel
+            ?? UpdateChannelPolicy.ForInstalledVersion(AppBuildInfo.Version);
+        _checkUpdatesOnStartup = workspace.Data.Updates.CheckOnStartup;
         workspace.Changed += (_, _) => RefreshOverview();
     }
 
@@ -24,6 +31,20 @@ public sealed class MainViewModel : ObservableObject
     public string RosterSummary => $"固定名单 · {Roster.Count(member => member.IsActive)} 人";
 
     public string DataFilePath => _workspace.DataFilePath;
+
+    public string CurrentVersionDisplay => $"v{AppBuildInfo.DisplayVersion}";
+
+    public UpdateChannel UpdateChannel
+    {
+        get => _updateChannel;
+        set => SetProperty(ref _updateChannel, value);
+    }
+
+    public bool CheckUpdatesOnStartup
+    {
+        get => _checkUpdatesOnStartup;
+        set => SetProperty(ref _checkUpdatesOnStartup, value);
+    }
 
     public string StatusMessage
     {
@@ -42,6 +63,9 @@ public sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(RosterSummary));
         StatusMessage = $"固定名单已保存，共 {members.Count} 人";
     }
+
+    public Task SaveUpdatePreferencesAsync() =>
+        _workspace.SaveUpdatePreferencesAsync(UpdateChannel, CheckUpdatesOnStartup);
 
     public void AddRosterMember()
     {

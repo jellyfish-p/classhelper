@@ -13,6 +13,16 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>ClassHelper</AssemblyName>
     <RootNamespace>ClassHelper.App</RootNamespace>
+    <Version>0.1.0</Version>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <ClassHelperDeployment Condition="'$(ClassHelperDeployment)' == ''">framework-dependent</ClassHelperDeployment>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>ClassHelperDeployment</_Parameter1>
+      <_Parameter2>$(ClassHelperDeployment)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
 
 </Project>

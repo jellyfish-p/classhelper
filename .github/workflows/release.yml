@@ -26,13 +26,18 @@ env:
   DOTNET_NOLOGO: "1"
 
 jobs:
-  publish:
-    name: Publish Windows x64 package
+  prepare:
+    name: Validate release version
     runs-on: windows-latest
-    timeout-minutes: 20
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+      channel: ${{ steps.version.outputs.channel }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
 
     steps:
-      - name: Validate release tag
+      - name: Validate SemVer tag and determine channel
+        id: version
         shell: pwsh
         env:
           REQUESTED_TAG: ${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
@@ -43,16 +48,37 @@ jobs:
             throw "Release tag '$env:REQUESTED_TAG' must be 'v' followed by a valid SemVer 2.0.0 version."
           }
 
-          $isPrerelease = -not [string]::IsNullOrEmpty($Matches[4])
-          "RELEASE_TAG=$env:REQUESTED_TAG" >> $env:GITHUB_ENV
-          "VERSION=$($env:REQUESTED_TAG.Substring(1))" >> $env:GITHUB_ENV
-          "IS_PRERELEASE=$($isPrerelease.ToString().ToLowerInvariant())" >> $env:GITHUB_ENV
+          $prerelease = $Matches[4]
+          $isPrerelease = -not [string]::IsNullOrEmpty($prerelease)
+          $channel = if (-not $isPrerelease) {
+            "stable"
+          }
+          elseif ($prerelease.Split('.')[0] -match '^alpha') {
+            "alpha"
+          }
+          elseif ($prerelease.Split('.')[0] -match '^beta') {
+            "beta"
+          }
+          else {
+            "prerelease"
+          }
 
+          "tag=$env:REQUESTED_TAG" >> $env:GITHUB_OUTPUT
+          "version=$($env:REQUESTED_TAG.Substring(1))" >> $env:GITHUB_OUTPUT
+          "channel=$channel" >> $env:GITHUB_OUTPUT
+          "is_prerelease=$($isPrerelease.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+
+  verify:
+    name: Verify release source
+    needs: prepare
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
       - name: Check out release tag
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.release.tag_name || inputs.tag || github.ref }}
-          fetch-depth: 0
+          ref: ${{ needs.prepare.outputs.tag }}
 
       - name: Set up .NET SDK
         uses: actions/setup-dotnet@v5
@@ -74,41 +100,165 @@ jobs:
       - name: Run WPF smoke test
         run: dotnet run --project src/ClassHelper.App/ClassHelper.App.csproj --configuration Release --no-build -- --smoke-test
 
-      - name: Publish self-contained application
-        shell: pwsh
-        run: |
-          dotnet publish src/ClassHelper.App/ClassHelper.App.csproj `
-            --configuration Release `
-            --runtime win-x64 `
-            --self-contained true `
-            --output artifacts/publish `
-            -p:Version=$env:VERSION `
-            -p:PublishSingleFile=true `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
-            -p:PublishTrimmed=false `
-            -p:DebugType=None `
-            -p:DebugSymbols=false
+  publish:
+    name: ${{ matrix.runtime }} · ${{ matrix.deployment }}
+    needs:
+      - prepare
+      - verify
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime:
+          - win-x64
+          - win-x86
+          - win-arm64
+        deployment:
+          - self-contained
+          - framework-dependent
 
-      - name: Package application and checksum
-        shell: pwsh
-        run: |
-          $archive = "artifacts/ClassHelper-$env:VERSION-win-x64.zip"
-          Compress-Archive -Path "artifacts/publish/*" -DestinationPath $archive -CompressionLevel Optimal
-
-          $checksum = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-          $checksumFile = "$archive.sha256"
-          "$checksum  $(Split-Path -Path $archive -Leaf)" | Set-Content -Path $checksumFile -Encoding ascii
-
-          "ARCHIVE_PATH=$archive" >> $env:GITHUB_ENV
-          "CHECKSUM_PATH=$checksumFile" >> $env:GITHUB_ENV
-
-      - name: Upload workflow artifact
-        uses: actions/upload-artifact@v6
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v6
         with:
-          name: ClassHelper-${{ env.VERSION }}-win-x64
-          path: |
-            ${{ env.ARCHIVE_PATH }}
-            ${{ env.CHECKSUM_PATH }}
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore target runtime
+        run: dotnet restore src/ClassHelper.App/ClassHelper.App.csproj --runtime ${{ matrix.runtime }}
+
+      - name: Publish single-file executable
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          TARGET_RUNTIME: ${{ matrix.runtime }}
+          DEPLOYMENT: ${{ matrix.deployment }}
+        run: |
+          $selfContained = ($env:DEPLOYMENT -eq "self-contained").ToString().ToLowerInvariant()
+          $publishArguments = @(
+            "publish", "src/ClassHelper.App/ClassHelper.App.csproj",
+            "--configuration", "Release",
+            "--runtime", $env:TARGET_RUNTIME,
+            "--self-contained", $selfContained,
+            "--output", "artifacts/publish",
+            "--no-restore",
+            "-p:Version=$env:RELEASE_VERSION",
+            "-p:ClassHelperDeployment=$env:DEPLOYMENT",
+            "-p:PublishSingleFile=true",
+            "-p:IncludeNativeLibrariesForSelfExtract=true",
+            "-p:PublishTrimmed=false",
+            "-p:DebugType=None",
+            "-p:DebugSymbols=false"
+          )
+
+          dotnet @publishArguments
+          if ($LASTEXITCODE -ne 0) {
+            throw "dotnet publish failed for $env:TARGET_RUNTIME / $env:DEPLOYMENT."
+          }
+
+          $source = "artifacts/publish/ClassHelper.exe"
+          if (-not (Test-Path -LiteralPath $source)) {
+            throw "Published executable was not found at '$source'."
+          }
+
+          New-Item -ItemType Directory -Path "artifacts/assets" -Force | Out-Null
+          $fileName = "ClassHelper-$env:RELEASE_VERSION-$env:TARGET_RUNTIME-$env:DEPLOYMENT.exe"
+          $target = Join-Path "artifacts/assets" $fileName
+          Copy-Item -LiteralPath $source -Destination $target
+
+          $checksum = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$checksum  $fileName" | Set-Content -Path "$target.sha256" -Encoding ascii
+
+      - name: Upload matrix artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.runtime }}-${{ matrix.deployment }}
+          path: artifacts/assets/*
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Assemble and publish release
+    needs:
+      - prepare
+      - publish
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Download matrix artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          path: artifacts
+          merge-multiple: true
+
+      - name: Generate update manifest
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_CHANNEL: ${{ needs.prepare.outputs.channel }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          $tagSegment = [Uri]::EscapeDataString($env:RELEASE_TAG)
+          $releaseUrl = "https://github.com/$env:REPOSITORY/releases/tag/$tagSegment"
+          $downloadBase = "https://github.com/$env:REPOSITORY/releases/download/$tagSegment"
+          $assets = @()
+
+          foreach ($executable in Get-ChildItem -Path "artifacts/*.exe" | Sort-Object Name) {
+            if ($executable.Name -notmatch '^ClassHelper-.+-(win-(?:x64|x86|arm64))-(self-contained|framework-dependent)\.exe$') {
+              throw "Unexpected release asset name '$($executable.Name)'."
+            }
+
+            $runtime = $Matches[1]
+            $deployment = $Matches[2]
+            $checksumFile = "$($executable.FullName).sha256"
+            if (-not (Test-Path -LiteralPath $checksumFile)) {
+              throw "Checksum is missing for '$($executable.Name)'."
+            }
+
+            $checksum = ((Get-Content -LiteralPath $checksumFile -Raw).Trim() -split '\s+')[0]
+            $fileSegment = [Uri]::EscapeDataString($executable.Name)
+            $assets += [ordered]@{
+              runtime = $runtime
+              deployment = $deployment
+              fileName = $executable.Name
+              size = $executable.Length
+              sha256 = $checksum
+              downloadUrl = "$downloadBase/$fileSegment"
+            }
+          }
+
+          if ($assets.Count -ne 6) {
+            throw "Expected 6 executable assets, found $($assets.Count)."
+          }
+
+          $manifest = [ordered]@{
+            schemaVersion = 1
+            version = $env:RELEASE_VERSION
+            tag = $env:RELEASE_TAG
+            channel = $env:RELEASE_CHANNEL
+            publishedAt = [DateTimeOffset]::UtcNow.ToString("O")
+            releaseUrl = $releaseUrl
+            assets = $assets
+          }
+
+          $manifestPath = "artifacts/update-manifest.json"
+          $manifest | ConvertTo-Json -Depth 5 | Set-Content -Path $manifestPath -Encoding utf8
+          $manifestChecksum = (Get-FileHash -LiteralPath $manifestPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$manifestChecksum  update-manifest.json" | Set-Content -Path "$manifestPath.sha256" -Encoding ascii
+
+      - name: Upload complete release bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: ClassHelper-${{ needs.prepare.outputs.version }}-release
+          path: artifacts/*
           if-no-files-found: error
           retention-days: 14
 
@@ -116,13 +266,15 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          IS_PRERELEASE: ${{ needs.prepare.outputs.is_prerelease }}
         run: |
           gh release view $env:RELEASE_TAG *> $null
           $releaseExists = $LASTEXITCODE -eq 0
 
           if ($releaseExists) {
-            gh release upload $env:RELEASE_TAG $env:ARCHIVE_PATH $env:CHECKSUM_PATH --clobber
-
+            gh release upload $env:RELEASE_TAG "artifacts/*" --clobber
             if ($LASTEXITCODE -ne 0) {
               throw "Failed to upload assets to GitHub Release '$env:RELEASE_TAG'."
             }
@@ -134,11 +286,10 @@ jobs:
             $releaseArguments = @(
               "release", "create",
               $env:RELEASE_TAG,
-              $env:ARCHIVE_PATH,
-              $env:CHECKSUM_PATH,
+              "artifacts/*",
               "--verify-tag",
               "--generate-notes",
-              "--title", "ClassHelper $env:VERSION"
+              "--title", "ClassHelper $env:RELEASE_VERSION"
             )
 
             if ($env:IS_PRERELEASE -eq "true") {

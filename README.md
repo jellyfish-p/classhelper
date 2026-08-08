@@ -11,6 +11,7 @@
 - 独立随机和均衡轮选两种点名方式；
 - 始终置顶、可拖动并自动吸边的快捷启动器；
 - 当前 Windows 用户可选开机自启；
+- 按 Alpha、Beta、预发行和稳定版通道自动检查更新；
 - 本地 JSON 数据文件和原子写入。
 
 课程表、节假日、教学日历和桌面课程栏由 ClassIsland 提供，本项目不再实现。多屏增强、SQLite 和安装器暂未接入。
@@ -60,7 +61,11 @@ v0.1.0-rc.1+build.42
 
 包含先行版本标识符的标签会自动发布为 GitHub Prerelease。工作流会拒绝 `v01.2.3`、`v1.2`、`v1.2.3-rc.01` 等不符合 SemVer 的标签。
 
-推送标签后会自动创建 GitHub Release，并附带可直接运行的 Windows x64 自包含 ZIP 和 SHA-256 校验文件。也可以先在 GitHub 中发布同格式标签的 Release，工作流会自动构建并补充产物；失败时可从 Actions 页面输入已有标签手动重跑。
+推送标签后会通过 GitHub Actions 原生矩阵生成六种单文件 EXE：`win-x64`、`win-x86`、`win-arm64` 分别提供内含 .NET 的自包含版和需要预装 .NET 10 Desktop Runtime 的框架依赖版。Release 同时包含每个 EXE 的 SHA-256 校验文件，以及供客户端检查更新的 `update-manifest.json`。
+
+更新通道按稳定程度向下包含：Alpha 接收全部版本，Beta 接收 Beta、预发行和稳定版，预发行接收 RC/Preview 和稳定版，Stable 只接收稳定版。首次运行默认采用当前安装版本所属层级，也可以在设置中更改。更新检查只读取公开的 GitHub Releases，不上传本地数据。
+
+也可以先在 GitHub 中发布同格式标签的 Release，工作流会自动构建并补充产物；失败时可从 Actions 页面输入已有标签手动重跑。
 
 ## 设计文档
 

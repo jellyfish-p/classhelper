@@ -1,17 +1,32 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using ClassHelper.Core.RollCall;
+using ClassHelper.Core.Updates;
 
 namespace ClassHelper.App.Services;
 
 public sealed class PreviewData
 {
     public List<RosterMember> Roster { get; init; } = [];
+
+    public UpdatePreferences Updates { get; set; } = new();
+}
+
+public sealed class UpdatePreferences
+{
+    public UpdateChannel? Channel { get; set; }
+
+    public bool CheckOnStartup { get; set; } = true;
 }
 
 public sealed class JsonClassroomStore
 {
-    private readonly JsonSerializerOptions _options = new(JsonSerializerDefaults.Web) { WriteIndented = true };
+    private readonly JsonSerializerOptions _options = new(JsonSerializerDefaults.Web)
+    {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+    };
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly string _filePath;
 
@@ -36,7 +51,13 @@ public sealed class JsonClassroomStore
 
         await using var stream = File.OpenRead(_filePath);
         var data = await JsonSerializer.DeserializeAsync<PreviewData>(stream, _options, cancellationToken);
-        return data ?? CreateSampleData();
+        if (data is null)
+        {
+            return CreateSampleData();
+        }
+
+        data.Updates ??= new UpdatePreferences();
+        return data;
     }
 
     public async Task SaveAsync(PreviewData data, CancellationToken cancellationToken)
