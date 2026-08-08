@@ -7,5 +7,8 @@
 - [领域词汇表](./CONTEXT.md)
 - [产品范围](./docs/product-scope.md)
 - [技术设计](./docs/technical-design.md)
+- [UI/UX 设计规范](./docs/uiux/ui-ux-spec.md)
+- [UI/UX 审查清单](./docs/uiux/review-checklist.md)
+- [UI/UX 高保真预览](./docs/uiux/previews/README.md)
+- [Imagine 提示记录](./docs/uiux/preview-prompts.md)
 - [架构决策记录](./docs/adr/)
-
