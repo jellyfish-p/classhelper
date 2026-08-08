@@ -67,6 +67,12 @@
                             <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
+                            <Trigger Property="Tag" Value="Top">
+                                <Setter TargetName="ModeSurface" Property="CornerRadius" Value="13,13,0,0" />
+                            </Trigger>
+                            <Trigger Property="Tag" Value="Bottom">
+                                <Setter TargetName="ModeSurface" Property="CornerRadius" Value="0,0,13,13" />
+                            </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="ModeSurface" Property="Background" Value="{StaticResource BrandSoftBrush}" />
                                 <Setter Property="Foreground" Value="{StaticResource BrandBrush}" />
@@ -92,6 +98,12 @@
                             <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
+                            <Trigger Property="Tag" Value="Top">
+                                <Setter TargetName="ModeSurface" Property="CornerRadius" Value="13,13,0,0" />
+                            </Trigger>
+                            <Trigger Property="Tag" Value="Bottom">
+                                <Setter TargetName="ModeSurface" Property="CornerRadius" Value="0,0,13,13" />
+                            </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="ModeSurface" Property="Background" Value="{StaticResource BrandHoverBrush}" />
                             </Trigger>
@@ -249,6 +261,7 @@
                 <StackPanel>
                     <Button x:Name="IndependentModeButton"
                             Style="{StaticResource FloatingModeButton}"
+                            Tag="Top"
                             Click="Independent_Click">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -269,6 +282,7 @@
 
                     <Button x:Name="BalancedModeButton"
                             Style="{StaticResource FloatingModeActiveButton}"
+                            Tag="Bottom"
                             Click="Balanced_Click">
                         <Grid>
                             <Grid.ColumnDefinitions>
