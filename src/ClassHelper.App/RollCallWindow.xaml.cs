@@ -21,13 +21,15 @@ public partial class RollCallWindow : Window
 
     private void StartSession()
     {
+        ApplyModeStyles();
+
         try
         {
             _session = new RollCallSession(_workspace.Data.Roster, _mode);
             DrawButton.IsEnabled = true;
             ModeText.Text = _mode == RollCallMode.IndependentRandom ? "独立随机" : "均衡轮选";
             HintText.Text = "准备好后开始抽取";
-            ResultNameText.Text = "—";
+            ResultNameText.Text = "等待抽取";
             ResultNumberText.Text = string.Empty;
             RefreshRemaining();
         }
@@ -55,9 +57,12 @@ public partial class RollCallWindow : Window
         HintText.Text = "本次抽取结果";
         RefreshRemaining();
 
-        var fade = new DoubleAnimation(0.2, 1, TimeSpan.FromMilliseconds(320));
-        ResultNameText.BeginAnimation(OpacityProperty, fade);
-        ResultNumberText.BeginAnimation(OpacityProperty, fade);
+        if (SystemParameters.ClientAreaAnimation)
+        {
+            var fade = new DoubleAnimation(0.15, 1, TimeSpan.FromMilliseconds(280));
+            ResultNameText.BeginAnimation(OpacityProperty, fade);
+            ResultNumberText.BeginAnimation(OpacityProperty, fade);
+        }
     }
 
     private void Independent_Click(object sender, RoutedEventArgs e)
@@ -76,9 +81,17 @@ public partial class RollCallWindow : Window
     {
         _session?.ResetRound();
         HintText.Text = "本轮已重置";
-        ResultNameText.Text = "—";
+        ResultNameText.Text = "等待抽取";
         ResultNumberText.Text = string.Empty;
         RefreshRemaining();
+    }
+
+    private void ApplyModeStyles()
+    {
+        IndependentModeButton.Style = (Style)FindResource(
+            _mode == RollCallMode.IndependentRandom ? "ModeActiveButton" : "ModeInactiveButton");
+        BalancedModeButton.Style = (Style)FindResource(
+            _mode == RollCallMode.BalancedRound ? "ModeActiveButton" : "ModeInactiveButton");
     }
 
     private void RefreshRemaining()

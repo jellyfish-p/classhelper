@@ -24,7 +24,22 @@ public partial class MainWindow : Window
         _settingsInitialized = true;
     }
 
-    public void NavigateTo(int pageIndex) => MainTabs.SelectedIndex = Math.Clamp(pageIndex, 0, 4);
+    public void NavigateTo(int pageIndex)
+    {
+        pageIndex = Math.Clamp(pageIndex, 0, 4);
+        MainTabs.SelectedIndex = pageIndex;
+
+        var selectedNavigation = pageIndex switch
+        {
+            0 => OverviewNav,
+            1 => RollCallNav,
+            2 => RosterNav,
+            3 => SettingsNav,
+            4 => AboutNav,
+            _ => OverviewNav
+        };
+        selectedNavigation.IsChecked = true;
+    }
 
     public void AllowClose() => _allowClose = true;
 
@@ -41,7 +56,7 @@ public partial class MainWindow : Window
 
     private void Navigate_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string tag } && int.TryParse(tag, out var pageIndex))
+        if (sender is FrameworkElement { Tag: string tag } && int.TryParse(tag, out var pageIndex))
         {
             NavigateTo(pageIndex);
         }
@@ -55,7 +70,31 @@ public partial class MainWindow : Window
 
     private void AddMember_Click(object sender, RoutedEventArgs e) => _viewModel.AddRosterMember();
 
-    private async void SaveRoster_Click(object sender, RoutedEventArgs e) => await _viewModel.SaveRosterAsync();
+    private async void SaveRoster_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button)
+        {
+            return;
+        }
+
+        var originalContent = button.Content;
+        button.IsEnabled = false;
+        button.Content = "正在保存";
+
+        try
+        {
+            await _viewModel.SaveRosterAsync();
+        }
+        catch (Exception exception)
+        {
+            _viewModel.StatusMessage = $"名单保存失败：{exception.Message}";
+        }
+        finally
+        {
+            button.Content = originalContent;
+            button.IsEnabled = true;
+        }
+    }
 
     private void PreviewRoster_Click(object sender, RoutedEventArgs e) =>
         _viewModel.ImportRosterText(RosterPasteBox.Text);

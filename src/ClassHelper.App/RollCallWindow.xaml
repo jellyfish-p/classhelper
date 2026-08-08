@@ -1,15 +1,16 @@
 <Window x:Class="ClassHelper.App.RollCallWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationCore"
         Title="随机点名"
-        Width="960"
+        Width="940"
         Height="560"
-        MinWidth="760"
-        MinHeight="480"
+        MinWidth="780"
+        MinHeight="500"
         WindowStartupLocation="CenterScreen"
-        Background="#F3F1EC"
+        Background="{StaticResource CanvasBrush}"
         Topmost="True">
-    <Grid Margin="28">
+    <Grid Margin="32,28,32,30">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -17,51 +18,86 @@
         </Grid.RowDefinitions>
 
         <Grid>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock x:Name="ModeText" FontSize="16" FontWeight="SemiBold" />
-                <Border Background="#E9ECF8" CornerRadius="12" Padding="10,5" Margin="12,0,0,0">
-                    <TextBlock x:Name="RemainingText" Foreground="#425FC7" FontSize="12" />
-                </Border>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="随机点名" FontSize="24" FontWeight="SemiBold" />
+                <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                    <TextBlock x:Name="ModeText" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource BrandBrush}" />
+                    <TextBlock Text="  ·  " FontSize="12" Foreground="{StaticResource TextTertiaryBrush}" />
+                    <TextBlock x:Name="RemainingText" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                </StackPanel>
             </StackPanel>
-            <Button HorizontalAlignment="Right" Style="{StaticResource SecondaryButton}" Content="结束点名" Click="Close_Click" />
+            <Button Grid.Column="1"
+                    Style="{StaticResource QuietButton}"
+                    Content="结束点名"
+                    VerticalAlignment="Top"
+                    Click="Close_Click" />
         </Grid>
 
         <Border Grid.Row="1"
-                Margin="0,26"
-                Background="#FBFAF7"
-                BorderBrush="#DCE1E6"
+                Margin="0,24,0,22"
+                BorderBrush="#C8D4F1"
                 BorderThickness="1"
                 CornerRadius="18">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#F8FAFF" Offset="0" />
+                    <GradientStop Color="#E8EEFF" Offset="1" />
+                </LinearGradientBrush>
+            </Border.Background>
             <Grid>
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border Width="4" Height="88" CornerRadius="2" Background="{StaticResource BrandBrush}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="28,0,0,0" />
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="90,24">
                     <TextBlock x:Name="HintText"
                                Text="准备好后开始抽取"
                                HorizontalAlignment="Center"
-                               Foreground="#66717F"
-                               FontSize="15" />
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontSize="14" />
                     <TextBlock x:Name="ResultNameText"
-                               Text="—"
+                               Text="等待抽取"
                                HorizontalAlignment="Center"
-                               Margin="0,14,0,0"
-                               FontSize="68"
-                               FontWeight="SemiBold" />
+                               Margin="0,15,0,0"
+                               FontFamily="Microsoft YaHei UI"
+                               FontSize="70"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               automation:AutomationProperties.LiveSetting="Assertive"
+                               automation:AutomationProperties.Name="点名结果" />
                     <TextBlock x:Name="ResultNumberText"
                                HorizontalAlignment="Center"
-                               Margin="0,8,0,0"
-                               Foreground="#66717F"
-                               FontSize="18" />
+                               Margin="0,9,0,0"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontSize="17" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <Grid Grid.Row="2">
             <StackPanel Orientation="Horizontal">
-                <Button Style="{StaticResource SecondaryButton}" Content="独立随机" Margin="0,0,10,0" Click="Independent_Click" />
-                <Button Style="{StaticResource SecondaryButton}" Content="均衡轮选" Click="Balanced_Click" />
+                <Button x:Name="IndependentModeButton"
+                        Style="{StaticResource ModeInactiveButton}"
+                        Content="独立随机"
+                        Margin="0,0,8,0"
+                        Click="Independent_Click" />
+                <Button x:Name="BalancedModeButton"
+                        Style="{StaticResource ModeActiveButton}"
+                        Content="均衡轮选"
+                        Click="Balanced_Click" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Style="{StaticResource SecondaryButton}" Content="重置本轮" Margin="0,0,10,0" Click="Reset_Click" />
-                <Button x:Name="DrawButton" Style="{StaticResource PrimaryButton}" Content="抽一位" MinWidth="128" Click="Draw_Click" />
+                <Button Style="{StaticResource SecondaryButton}"
+                        Content="重置本轮"
+                        Margin="0,0,10,0"
+                        Click="Reset_Click" />
+                <Button x:Name="DrawButton"
+                        Style="{StaticResource PrimaryButton}"
+                        Content="抽一位"
+                        MinWidth="132"
+                        Click="Draw_Click"
+                        automation:AutomationProperties.Name="抽一位成员" />
             </StackPanel>
         </Grid>
     </Grid>
