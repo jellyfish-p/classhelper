@@ -379,16 +379,54 @@
                                 BorderThickness="1"
                                 CornerRadius="14">
                             <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="46" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <Border Background="#FAFBFD"
+                                        BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="0,0,0,1"
+                                        CornerRadius="13,13,0,0">
+                                    <Grid Margin="16,0">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="名单成员" FontSize="12.5" FontWeight="SemiBold" />
+                                            <Border Width="1" Height="14" Margin="11,0" Background="{StaticResource BorderBrush}" />
+                                            <TextBlock Text="{Binding Roster.Count, StringFormat={}{0} 人}"
+                                                       FontSize="11.5"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                        <TextBlock Text="点击单元格直接编辑，勾选决定是否参与点名"
+                                                   HorizontalAlignment="Right"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="10.5"
+                                                   Foreground="{StaticResource TextTertiaryBrush}" />
+                                    </Grid>
+                                </Border>
+
                                 <DataGrid x:Name="RosterGrid"
+                                          Grid.Row="1"
                                           ItemsSource="{Binding Roster}"
-                                          Style="{StaticResource RosterDataGrid}">
+                                          Style="{StaticResource RosterDataGrid}"
+                                          FrozenColumnCount="1">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="姓名" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="2*" />
-                                        <DataGridTextColumn Header="学号 / 座号" Binding="{Binding Number, UpdateSourceTrigger=PropertyChanged}" Width="*" />
-                                        <DataGridCheckBoxColumn Header="参与点名" Binding="{Binding IsActive}" Width="120" />
+                                        <DataGridTextColumn Header="姓名"
+                                                            Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                                            EditingElementStyle="{StaticResource RosterCellEditor}"
+                                                            Width="2*" />
+                                        <DataGridTextColumn Header="学号 / 座号"
+                                                            Binding="{Binding Number, UpdateSourceTrigger=PropertyChanged}"
+                                                            EditingElementStyle="{StaticResource RosterCellEditor}"
+                                                            Width="*" />
+                                        <DataGridCheckBoxColumn Header="参与点名"
+                                                                Binding="{Binding IsActive}"
+                                                                HeaderStyle="{StaticResource RosterCenteredColumnHeader}"
+                                                                ElementStyle="{StaticResource RosterCheckBox}"
+                                                                EditingElementStyle="{StaticResource RosterCheckBox}"
+                                                                Width="120" />
                                     </DataGrid.Columns>
                                 </DataGrid>
-                                <Border Background="{StaticResource SurfaceBrush}" CornerRadius="14">
+                                <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" CornerRadius="0,0,13,13">
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="Visibility" Value="Collapsed" />
@@ -402,7 +440,7 @@
                                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE77B;" FontFamily="Segoe Fluent Icons" FontSize="26" Foreground="{StaticResource TextTertiaryBrush}" HorizontalAlignment="Center" />
                                         <TextBlock Text="名单还是空的" Margin="0,12,0,0" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" />
-                                        <TextBlock Text="新增成员，或在上方粘贴名单。" Margin="0,5,0,0" Style="{StaticResource BodyText}" HorizontalAlignment="Center" />
+                                        <TextBlock Text="新增成员、粘贴文本，或从文件导入。" Margin="0,5,0,0" Style="{StaticResource BodyText}" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
                             </Grid>

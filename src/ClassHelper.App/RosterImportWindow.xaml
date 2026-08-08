@@ -116,7 +116,11 @@
                     <DataGridTextColumn Header="来源行" Binding="{Binding SourceRowNumber}" Width="84" />
                     <DataGridTextColumn Header="姓名" Binding="{Binding Name}" Width="2*" />
                     <DataGridTextColumn Header="学号 / 座号" Binding="{Binding Number}" Width="*" />
-                    <DataGridCheckBoxColumn Header="参与点名" Binding="{Binding IsActive}" Width="105" />
+                    <DataGridCheckBoxColumn Header="参与点名"
+                                            Binding="{Binding IsActive}"
+                                            HeaderStyle="{StaticResource RosterCenteredColumnHeader}"
+                                            ElementStyle="{StaticResource RosterCheckBox}"
+                                            Width="105" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
