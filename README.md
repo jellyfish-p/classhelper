@@ -10,11 +10,10 @@
 - 固定名单的新增、粘贴预览、启用/停用与本地保存；
 - 独立随机和均衡轮选两种点名方式；
 - 始终置顶、可拖动并自动吸边的快捷启动器；
-- 桌面底层的顶部占位栏；
 - 当前 Windows 用户可选开机自启；
 - 本地 JSON 数据文件和原子写入。
 
-按当前版本范围，课表编辑、教学日历、多屏模式、SQLite 和安装器暂未接入。顶部栏会明确显示“课表尚未配置”，不会提供不可用入口。
+课程表、节假日、教学日历和桌面课程栏由 ClassIsland 提供，本项目不再实现。多屏增强、SQLite 和安装器暂未接入。
 
 ### 运行
 
@@ -46,7 +45,7 @@ dotnet run --project src/ClassHelper.App/ClassHelper.App.csproj -- --smoke-test
 - [技术设计](./docs/technical-design.md)
 - [UI/UX 设计规范](./docs/uiux/ui-ux-spec.md)
 - [UI/UX 审查清单](./docs/uiux/review-checklist.md)
-- [UI/UX 高保真预览](./docs/uiux/previews/README.md)
-- [Imagine 提示记录](./docs/uiux/preview-prompts.md)
+- [历史 UI/UX 高保真预览](./docs/uiux/previews/README.md)
+- [历史 Imagine 提示记录](./docs/uiux/preview-prompts.md)
 - [0.1 Preview 实现说明](./docs/implementation-v0.1.md)
 - [架构决策记录](./docs/adr/)

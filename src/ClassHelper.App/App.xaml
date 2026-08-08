@@ -10,8 +10,6 @@
         <SolidColorBrush x:Key="TextSecondaryBrush" Color="#66717F" />
         <SolidColorBrush x:Key="BorderBrush" Color="#DCE1E6" />
         <SolidColorBrush x:Key="BrandBrush" Color="#425FC7" />
-        <SolidColorBrush x:Key="CurrentBrush" Color="#267F73" />
-        <SolidColorBrush x:Key="NextBrush" Color="#C47A20" />
         <SolidColorBrush x:Key="DangerBrush" Color="#BE4D5B" />
 
         <Style TargetType="Window">

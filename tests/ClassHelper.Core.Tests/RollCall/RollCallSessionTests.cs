@@ -1,5 +1,4 @@
 using ClassHelper.Core.RollCall;
-using ClassHelper.Core.Scheduling;
 
 namespace ClassHelper.Core.Tests.RollCall;
 

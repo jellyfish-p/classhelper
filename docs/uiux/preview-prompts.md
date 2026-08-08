@@ -1,4 +1,6 @@
-# Imagine 预览提示记录
+# Imagine 历史预览提示记录
+
+> 档案说明：下列提示包含已交由 ClassIsland 的课程与顶部栏设计，不代表当前 ClassHelper 范围。
 
 > 生成方式：Codex 内置 `image_gen`
 > 用例分类：`ui-mockup`；日历纠错使用 `precise-object-edit`

@@ -1,7 +1,6 @@
 using System.Windows;
 using ClassHelper.App.Services;
 using ClassHelper.App.ViewModels;
-using ClassHelper.Core.Scheduling;
 
 namespace ClassHelper.App;
 
@@ -17,7 +16,7 @@ public partial class App : Application
         {
             var store = new JsonClassroomStore();
             var data = await store.LoadAsync(CancellationToken.None);
-            var workspace = new ClassroomWorkspace(data, store, new ScheduleEngine());
+            var workspace = new ClassroomWorkspace(data, store);
             _controller = new AppController(workspace);
 
             if (e.Args.Contains("--smoke-test", StringComparer.OrdinalIgnoreCase))

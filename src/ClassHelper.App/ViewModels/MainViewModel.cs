@@ -1,66 +1,33 @@
 using System.Collections.ObjectModel;
-using ClassHelper.Core.Scheduling;
+using ClassHelper.Core.RollCall;
 
 namespace ClassHelper.App.ViewModels;
 
 public sealed class MainViewModel : ObservableObject
 {
     private readonly ClassroomWorkspace _workspace;
-    private int _selectedWeek = 1;
     private string _statusMessage = "所有更改保存在本机";
 
     public MainViewModel(ClassroomWorkspace workspace)
     {
         _workspace = workspace;
-        WeekRows = workspace.CreateWeekRows(_selectedWeek);
         Roster = new ObservableCollection<RosterMemberRow>(workspace.Data.Roster.Select(RosterMemberRow.FromModel));
-        RefreshToday();
-        workspace.Changed += (_, _) => RefreshToday();
+        DateLabel = CreateDateLabel();
+        workspace.Changed += (_, _) => RefreshOverview();
     }
-
-    public ObservableCollection<TodayPeriodViewModel> TodayPeriods { get; } = [];
-
-    public ObservableCollection<WeekScheduleRow> WeekRows { get; private set; }
 
     public ObservableCollection<RosterMemberRow> Roster { get; }
 
-    public string DateLabel { get; private set; } = string.Empty;
-
-    public string CycleLabel { get; private set; } = string.Empty;
-
-    public string CurrentCourseLabel { get; private set; } = string.Empty;
-
-    public string NextCourseLabel { get; private set; } = string.Empty;
+    public string DateLabel { get; }
 
     public string RosterSummary => $"固定名单 · {Roster.Count(member => member.IsActive)} 人";
 
     public string DataFilePath => _workspace.DataFilePath;
 
-    public int SelectedWeek
-    {
-        get => _selectedWeek;
-        set
-        {
-            if (!SetProperty(ref _selectedWeek, Math.Clamp(value, 1, _workspace.Data.CycleLength)))
-            {
-                return;
-            }
-
-            WeekRows = _workspace.CreateWeekRows(_selectedWeek);
-            OnPropertyChanged(nameof(WeekRows));
-        }
-    }
-
     public string StatusMessage
     {
         get => _statusMessage;
         set => SetProperty(ref _statusMessage, value);
-    }
-
-    public async Task SaveWeekAsync()
-    {
-        await _workspace.SaveWeekAsync(SelectedWeek, WeekRows);
-        StatusMessage = $"第 {SelectedWeek} 周课程表已保存";
     }
 
     public async Task SaveRosterAsync()
@@ -110,83 +77,16 @@ public sealed class MainViewModel : ObservableObject
         StatusMessage = $"已预览 {parsed.Count} 名成员，请确认后保存";
     }
 
-    public async Task SaveCalendarOverrideAsync(DateOnly date, TeachingDayKind kind, DayOfWeek? sourceDay)
+    public void RefreshOverview()
     {
-        await _workspace.SetTeachingDayAsync(date, kind, sourceDay);
-        StatusMessage = $"{date:yyyy-MM-dd} 的教学安排已保存";
+        OnPropertyChanged(nameof(RosterSummary));
     }
 
-    public void RefreshToday()
+    private static string CreateDateLabel()
     {
-        var today = _workspace.GetToday();
+        var now = DateTime.Now;
         var culture = System.Globalization.CultureInfo.GetCultureInfo("zh-CN");
-        DateLabel = $"{today.Date:M 月 d 日} {culture.DateTimeFormat.GetDayName(today.Date.DayOfWeek)}";
-        CycleLabel = $"第 {today.CycleWeek} 周" + (today.CalendarNote is null ? string.Empty : $" · {today.CalendarNote}");
-
-        TodayPeriods.Clear();
-        foreach (var scheduledPeriod in today.Periods)
-        {
-            TodayPeriods.Add(TodayPeriodViewModel.FromModel(scheduledPeriod));
-        }
-
-        var current = today.Periods.FirstOrDefault(period => period.IsCurrent);
-        var next = today.Periods.FirstOrDefault(period => period.IsNext);
-        CurrentCourseLabel = today.IsNoClass
-            ? today.CalendarNote ?? "今日停课"
-            : current?.Entry?.CourseName is { Length: > 0 } currentName
-                ? $"正在上课 · {currentName}"
-                : "当前为课间或非教学时段";
-        NextCourseLabel = next?.Entry?.CourseName is { Length: > 0 } nextName
-            ? $"下一节 {next.Period.StartTime:HH:mm} · {nextName}"
-            : "今天已无后续课程";
-
-        OnPropertyChanged(nameof(DateLabel));
-        OnPropertyChanged(nameof(CycleLabel));
-        OnPropertyChanged(nameof(CurrentCourseLabel));
-        OnPropertyChanged(nameof(NextCourseLabel));
-    }
-}
-
-public sealed record TodayPeriodViewModel(
-    string PeriodName,
-    string TimeRange,
-    string CourseName,
-    string StateLabel,
-    string Background,
-    string Foreground)
-{
-    public static TodayPeriodViewModel FromModel(ScheduledPeriod model)
-    {
-        var courseName = model.Entry?.CourseName ?? "空课";
-        if (model.IsCurrent)
-        {
-            return new TodayPeriodViewModel(
-                model.Period.Name,
-                $"{model.Period.StartTime:HH:mm}–{model.Period.EndTime:HH:mm}",
-                courseName,
-                "进行中",
-                "#267F73",
-                "#FFFFFF");
-        }
-
-        if (model.IsNext)
-        {
-            return new TodayPeriodViewModel(
-                model.Period.Name,
-                $"{model.Period.StartTime:HH:mm}–{model.Period.EndTime:HH:mm}",
-                courseName,
-                "下一节",
-                "#FFF5E7",
-                "#8A5415");
-        }
-
-        return new TodayPeriodViewModel(
-            model.Period.Name,
-            $"{model.Period.StartTime:HH:mm}–{model.Period.EndTime:HH:mm}",
-            courseName,
-            string.Empty,
-            "#F7F7F5",
-            "#18212B");
+        return $"{now:M 月 d 日} {culture.DateTimeFormat.GetDayName(now.DayOfWeek)}";
     }
 }
 

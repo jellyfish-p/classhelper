@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using ClassHelper.Core.Scheduling;
 
 namespace ClassHelper.Core.RollCall;
 

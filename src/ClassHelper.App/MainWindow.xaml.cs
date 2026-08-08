@@ -60,14 +60,6 @@ public partial class MainWindow : Window
     private void PreviewRoster_Click(object sender, RoutedEventArgs e) =>
         _viewModel.ImportRosterText(RosterPasteBox.Text);
 
-    private void BannerVisibility_Changed(object sender, RoutedEventArgs e)
-    {
-        if (_settingsInitialized)
-        {
-            _controller.ToggleBanner(BannerVisibilityCheckBox.IsChecked == true);
-        }
-    }
-
     private void AutoStart_Changed(object sender, RoutedEventArgs e)
     {
         if (!_settingsInitialized)

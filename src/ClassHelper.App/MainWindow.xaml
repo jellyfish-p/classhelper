@@ -24,14 +24,14 @@
                     <Button Style="{StaticResource NavButton}" Content="总览" Tag="0" Click="Navigate_Click" />
                     <Button Style="{StaticResource NavButton}" Content="随机点名" Tag="1" Click="Navigate_Click" />
                     <Button Style="{StaticResource NavButton}" Content="固定名单" Tag="2" Click="Navigate_Click" />
-                    <Button Style="{StaticResource NavButton}" Content="显示与启动" Tag="3" Click="Navigate_Click" />
+                    <Button Style="{StaticResource NavButton}" Content="启动设置" Tag="3" Click="Navigate_Click" />
                     <Button Style="{StaticResource NavButton}" Content="关于第一版" Tag="4" Click="Navigate_Click" />
                 </StackPanel>
 
                 <Border DockPanel.Dock="Bottom" Margin="12" Padding="12" Background="#EEF0F8" CornerRadius="8">
                     <StackPanel>
-                        <TextBlock Text="第一版范围" FontWeight="SemiBold" FontSize="12" />
-                        <TextBlock Text="课表与教学日历将在后续版本开放" Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" />
+                        <TextBlock Text="功能分工" FontWeight="SemiBold" FontSize="12" />
+                        <TextBlock Text="课程显示交由 ClassIsland，本应用专注名单与点名" Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" />
                     </StackPanel>
                 </Border>
             </DockPanel>
@@ -76,15 +76,13 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="桌面课程栏" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" />
-                                        <TextBlock Text="课表尚未配置" FontSize="22" FontWeight="SemiBold" Margin="0,8,0,0" />
-                                        <TextBlock Text="第一版先完成课堂点名与桌面启动体验，排课功能稍后接入。"
+                                        <TextBlock Text="课堂点名" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Text="随时可以开始" FontSize="22" FontWeight="SemiBold" Margin="0,8,0,0" />
+                                        <TextBlock Text="使用右侧贴边启动器，课堂中无需切换当前窗口。"
                                                    Foreground="{StaticResource TextSecondaryBrush}"
                                                    Margin="0,8,0,0" />
                                     </StackPanel>
-                                    <Border Grid.Column="1" Background="#ECEFF8" CornerRadius="20" Padding="14,8" VerticalAlignment="Center">
-                                        <TextBlock Text="预留" Foreground="{StaticResource BrandBrush}" FontWeight="SemiBold" />
-                                    </Border>
+                                    <Button Grid.Column="1" Style="{StaticResource PrimaryButton}" Content="开始点名" VerticalAlignment="Center" Click="StartBalanced_Click" />
                                 </Grid>
                             </Border>
 
@@ -210,19 +208,13 @@
                 <TabItem>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="32,28" MaxWidth="820" HorizontalAlignment="Left">
-                            <TextBlock Text="显示与启动" FontSize="26" FontWeight="SemiBold" />
-                            <TextBlock Text="第一版提供桌面占位栏和贴边启动器。" Margin="0,6,0,24" Foreground="{StaticResource TextSecondaryBrush}" />
+                            <TextBlock Text="启动设置" FontSize="26" FontWeight="SemiBold" />
+                            <TextBlock Text="管理贴边启动器和 Windows 登录启动行为。" Margin="0,6,0,24" Foreground="{StaticResource TextSecondaryBrush}" />
 
                             <Border Style="{StaticResource CardBorder}">
                                 <StackPanel>
-                                    <TextBlock Text="桌面组件" FontSize="18" FontWeight="SemiBold" />
-                                    <CheckBox x:Name="BannerVisibilityCheckBox"
-                                              Content="显示顶部课程栏占位"
-                                              IsChecked="True"
-                                              Margin="0,18,0,0"
-                                              Checked="BannerVisibility_Changed"
-                                              Unchecked="BannerVisibility_Changed" />
-                                    <TextBlock Text="课程栏始终位于普通窗口下方，当前只显示日期和后续功能提示。" TextWrapping="Wrap" Margin="24,7,0,0" Foreground="{StaticResource TextSecondaryBrush}" />
+                                    <TextBlock Text="快捷启动器" FontSize="18" FontWeight="SemiBold" />
+                                    <TextBlock Text="拖动顶部把手可以移动启动器；松开后会自动吸附到屏幕最近边缘。" TextWrapping="Wrap" Margin="0,12,0,0" Foreground="{StaticResource TextSecondaryBrush}" />
                                 </StackPanel>
                             </Border>
 
