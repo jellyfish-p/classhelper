@@ -232,6 +232,7 @@
 
             <Border x:Name="ModePanel"
                     Panel.ZIndex="10"
+                    Width="56"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Center"
                     Margin="18,0,0,0"
@@ -240,23 +241,11 @@
                     BorderThickness="1"
                     CornerRadius="14"
                     ClipToBounds="True"
-                    KeyboardNavigation.TabNavigation="Cycle">
-                <Border.Effect>
-                    <DropShadowEffect Color="#2E4568" BlurRadius="18" ShadowDepth="3" Opacity="0.18" />
-                </Border.Effect>
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="Width" Value="56" />
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Width" Value="194" />
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                <Setter Property="Width" Value="194" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
+                    KeyboardNavigation.TabNavigation="Cycle"
+                    MouseEnter="ModePanel_MouseEnter"
+                    MouseLeave="ModePanel_MouseLeave"
+                    GotKeyboardFocus="ModePanel_GotKeyboardFocus"
+                    LostKeyboardFocus="ModePanel_LostKeyboardFocus">
 
                 <StackPanel>
                     <Button x:Name="IndependentModeButton"

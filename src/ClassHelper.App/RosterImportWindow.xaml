@@ -11,14 +11,9 @@
         ShowInTaskbar="False"
         Background="{StaticResource CanvasBrush}">
     <Window.Resources>
-        <Style x:Key="MappingComboBox" TargetType="ComboBox">
-            <Setter Property="MinHeight" Value="38" />
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="FontSize" Value="12.5" />
-        </Style>
+        <Style x:Key="MappingComboBox"
+               TargetType="ComboBox"
+               BasedOn="{StaticResource PolishedComboBox}" />
     </Window.Resources>
 
     <Grid Margin="28,24,28,22">
@@ -113,9 +108,21 @@
                       IsReadOnly="True"
                       automation:AutomationProperties.Name="名单导入预览">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="来源行" Binding="{Binding SourceRowNumber}" Width="84" />
-                    <DataGridTextColumn Header="姓名" Binding="{Binding Name}" Width="2*" />
-                    <DataGridTextColumn Header="学号 / 座号" Binding="{Binding Number}" Width="*" />
+                    <DataGridTextColumn Header="来源行"
+                                        Binding="{Binding SourceRowNumber}"
+                                        HeaderStyle="{StaticResource RosterCenteredColumnHeader}"
+                                        ElementStyle="{StaticResource RosterCellText}"
+                                        Width="84" />
+                    <DataGridTextColumn Header="姓名"
+                                        Binding="{Binding Name}"
+                                        HeaderStyle="{StaticResource RosterCenteredColumnHeader}"
+                                        ElementStyle="{StaticResource RosterCellText}"
+                                        Width="2*" />
+                    <DataGridTextColumn Header="学号 / 座号"
+                                        Binding="{Binding Number}"
+                                        HeaderStyle="{StaticResource RosterCenteredColumnHeader}"
+                                        ElementStyle="{StaticResource RosterCellText}"
+                                        Width="*" />
                     <DataGridCheckBoxColumn Header="参与点名"
                                             Binding="{Binding IsActive}"
                                             HeaderStyle="{StaticResource RosterCenteredColumnHeader}"

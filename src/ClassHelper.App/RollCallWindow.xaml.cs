@@ -8,6 +8,8 @@ namespace ClassHelper.App;
 
 public partial class RollCallWindow : Window
 {
+    private const double CollapsedModePanelWidth = 56;
+    private const double ExpandedModePanelWidth = 194;
     private readonly ClassroomWorkspace _workspace;
     private RollCallMode _mode;
     private RollCallSession? _session;
@@ -79,6 +81,54 @@ public partial class RollCallWindow : Window
     {
         _mode = RollCallMode.BalancedRound;
         StartSession();
+    }
+
+    private void ModePanel_MouseEnter(object sender, MouseEventArgs e) =>
+        AnimateModePanel(ExpandedModePanelWidth, TimeSpan.FromMilliseconds(180));
+
+    private void ModePanel_MouseLeave(object sender, MouseEventArgs e) =>
+        AnimateModePanel(CollapsedModePanelWidth, TimeSpan.FromMilliseconds(140));
+
+    private void ModePanel_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (!ModePanel.IsMouseOver)
+        {
+            AnimateModePanel(ExpandedModePanelWidth, TimeSpan.FromMilliseconds(180));
+        }
+    }
+
+    private void ModePanel_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        var focusRemainsInside = e.NewFocus is DependencyObject nextFocus && ModePanel.IsAncestorOf(nextFocus);
+        if (!ModePanel.IsMouseOver && !focusRemainsInside)
+        {
+            AnimateModePanel(CollapsedModePanelWidth, TimeSpan.FromMilliseconds(140));
+        }
+    }
+
+    private void AnimateModePanel(double targetWidth, TimeSpan duration)
+    {
+        if (!SystemParameters.ClientAreaAnimation)
+        {
+            ModePanel.BeginAnimation(WidthProperty, null);
+            ModePanel.Width = targetWidth;
+            return;
+        }
+
+        var animation = new DoubleAnimation
+        {
+            From = ModePanel.ActualWidth,
+            To = targetWidth,
+            Duration = duration,
+            EasingFunction = new CubicEase
+            {
+                EasingMode = targetWidth > ModePanel.ActualWidth
+                    ? EasingMode.EaseOut
+                    : EasingMode.EaseInOut
+            }
+        };
+
+        ModePanel.BeginAnimation(WidthProperty, animation, HandoffBehavior.SnapshotAndReplace);
     }
 
     private void Reset_Click(object sender, RoutedEventArgs e)

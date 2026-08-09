@@ -412,10 +412,14 @@
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="姓名"
                                                             Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                                            HeaderStyle="{StaticResource RosterCenteredColumnHeader}"
+                                                            ElementStyle="{StaticResource RosterCellText}"
                                                             EditingElementStyle="{StaticResource RosterCellEditor}"
                                                             Width="2*" />
                                         <DataGridTextColumn Header="学号 / 座号"
                                                             Binding="{Binding Number, UpdateSourceTrigger=PropertyChanged}"
+                                                            HeaderStyle="{StaticResource RosterCenteredColumnHeader}"
+                                                            ElementStyle="{StaticResource RosterCellText}"
                                                             EditingElementStyle="{StaticResource RosterCellEditor}"
                                                             Width="*" />
                                         <DataGridCheckBoxColumn Header="参与点名"
@@ -512,8 +516,7 @@
                                         </StackPanel>
                                         <ComboBox x:Name="UpdateChannelComboBox"
                                                   Grid.Column="2"
-                                                  MinHeight="40"
-                                                  Padding="10,6"
+                                                  Style="{StaticResource PolishedComboBox}"
                                                   DisplayMemberPath="Label"
                                                   SelectedValuePath="Value"
                                                   SelectionChanged="UpdateSettings_Changed"

@@ -19,7 +19,7 @@ public partial class LauncherWindow : Window
     private void PlaceInitially()
     {
         var workArea = SystemParameters.WorkArea;
-        Left = workArea.Right - Width - 12;
+        Left = workArea.Right - Width;
         Top = workArea.Top + (workArea.Height - Height) / 2;
     }
 
@@ -39,7 +39,8 @@ public partial class LauncherWindow : Window
         var workArea = SystemParameters.WorkArea;
         var snapped = LauncherSnapCalculator.Snap(
             new WindowBounds(Left, Top, ActualWidth, ActualHeight),
-            new ScreenBounds(workArea.Left, workArea.Top, workArea.Width, workArea.Height));
+            new ScreenBounds(workArea.Left, workArea.Top, workArea.Width, workArea.Height),
+            margin: 0);
         Left = snapped.Left;
         Top = snapped.Top;
     }
