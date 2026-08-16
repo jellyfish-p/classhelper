@@ -31,12 +31,14 @@ public sealed class JsonClassroomStore
     private readonly string _filePath;
 
     public JsonClassroomStore()
-    {
-        var dataDirectory = Path.Combine(
+        : this(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "ClassHelper");
-        _filePath = Path.Combine(dataDirectory, "classroom.preview.json");
+            "ClassHelper",
+            "classroom.preview.json"))
+    {
     }
+
+    public JsonClassroomStore(string filePath) => _filePath = Path.GetFullPath(filePath);
 
     public string FilePath => _filePath;
 

@@ -36,6 +36,8 @@ public sealed class UpdateAsset
     public string Sha256 { get; init; } = string.Empty;
 
     public string DownloadUrl { get; init; } = string.Empty;
+
+    public string MirrorDownloadUrl { get; init; } = string.Empty;
 }
 
 public static class UpdateDeploymentExtensions

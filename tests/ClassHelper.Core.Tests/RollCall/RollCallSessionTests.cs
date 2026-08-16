@@ -5,6 +5,14 @@ namespace ClassHelper.Core.Tests.RollCall;
 public sealed class RollCallSessionTests
 {
     [Fact]
+    public void RosterMember_UsesNumberAsDisplayLabelWhenNameIsEmpty()
+    {
+        var member = new RosterMember(Guid.NewGuid(), string.Empty, "08");
+
+        Assert.Equal("08", member.DisplayLabel);
+    }
+
+    [Fact]
     public void IndependentRandom_AllowsSameMemberOnConsecutiveDraws()
     {
         var roster = CreateRoster("甲", "乙", "丙");

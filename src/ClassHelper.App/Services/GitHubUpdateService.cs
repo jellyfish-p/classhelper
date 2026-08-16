@@ -1,3 +1,4 @@
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -16,12 +17,15 @@ public sealed class GitHubUpdateService : IDisposable
 {
     private const string ReleasesEndpoint = "https://api.github.com/repos/jellyfish-p/classhelper/releases?per_page=30";
     private readonly HttpClient _httpClient;
+    private readonly Uri? _ossBaseUri;
     private readonly bool _ownsHttpClient;
 
-    public GitHubUpdateService(HttpClient? httpClient = null)
+    public GitHubUpdateService(HttpClient? httpClient = null, string? ossBaseUrl = null)
     {
         _ownsHttpClient = httpClient is null;
-        _httpClient = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(12) };
+        _httpClient = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+        _ossBaseUri = CreateBaseUri(ossBaseUrl ?? AppBuildInfo.OssBaseUrl);
+
         if (!_httpClient.DefaultRequestHeaders.UserAgent.Any())
         {
             _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ClassHelper", AppBuildInfo.DisplayVersion));
@@ -32,6 +36,43 @@ public sealed class GitHubUpdateService : IDisposable
     }
 
     public async Task<UpdateCheckResult?> CheckAsync(
+        UpdateChannel channel,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await CheckGitHubAsync(channel, cancellationToken);
+        }
+        catch (Exception githubException) when (
+            _ossBaseUri is not null
+            && (githubException is not OperationCanceledException || !cancellationToken.IsCancellationRequested))
+        {
+            try
+            {
+                return await CheckOssAsync(channel, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ossException)
+            {
+                throw new HttpRequestException(
+                    "GitHub 与国内镜像均暂时不可用。",
+                    new AggregateException(githubException, ossException));
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_ownsHttpClient)
+        {
+            _httpClient.Dispose();
+        }
+    }
+
+    private async Task<UpdateCheckResult?> CheckGitHubAsync(
         UpdateChannel channel,
         CancellationToken cancellationToken)
     {
@@ -64,43 +105,93 @@ public sealed class GitHubUpdateService : IDisposable
             var manifest = await _httpClient.GetFromJsonAsync<UpdateManifest>(
                 manifestAsset.BrowserDownloadUrl,
                 cancellationToken);
-            if (manifest is null
-                || manifest.SchemaVersion != 1
-                || !SemanticVersion.TryParse(manifest.Version, out var manifestVersion)
-                || manifestVersion.CompareTo(candidate.Parsed!) != 0
-                || !string.Equals(
-                    manifest.Version,
-                    candidate.Release.TagName.TrimStart('v'),
-                    StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            var deployment = AppBuildInfo.Deployment.ToSlug();
-            var asset = manifest.Assets.FirstOrDefault(item =>
-                string.Equals(item.Runtime, AppBuildInfo.Runtime, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(item.Deployment, deployment, StringComparison.OrdinalIgnoreCase));
-            if (asset is null)
-            {
-                continue;
-            }
-
-            return new UpdateCheckResult(
-                candidate.Parsed!,
+            var result = CreateResult(
+                manifest,
+                channel,
+                candidate.Parsed,
                 candidate.Release.TagName,
-                candidate.Release.HtmlUrl,
-                asset);
+                candidate.Release.HtmlUrl);
+            if (result is not null)
+            {
+                return result;
+            }
         }
 
         return null;
     }
 
-    public void Dispose()
+    private async Task<UpdateCheckResult?> CheckOssAsync(
+        UpdateChannel channel,
+        CancellationToken cancellationToken)
     {
-        if (_ownsHttpClient)
+        var channelName = channel.ToString().ToLowerInvariant();
+        var manifestUri = new Uri(_ossBaseUri!, $"channels/{channelName}/update-manifest.json");
+        var manifest = await _httpClient.GetFromJsonAsync<UpdateManifest>(
+            manifestUri,
+            cancellationToken);
+        if (manifest is null)
         {
-            _httpClient.Dispose();
+            throw new InvalidDataException("国内镜像返回了空更新清单。");
         }
+
+        if (!SemanticVersion.TryParse(manifest.Version, out var version))
+        {
+            throw new InvalidDataException("国内镜像的更新清单版本无效。");
+        }
+
+        if (version.CompareTo(AppBuildInfo.Version) <= 0)
+        {
+            return null;
+        }
+
+        return CreateResult(manifest, channel, version, manifest.Tag, manifest.ReleaseUrl)
+            ?? throw new InvalidDataException("国内镜像的更新清单与当前程序不兼容。");
+    }
+
+    private static UpdateCheckResult? CreateResult(
+        UpdateManifest? manifest,
+        UpdateChannel channel,
+        SemanticVersion? expectedVersion,
+        string expectedTag,
+        string releaseUrl)
+    {
+        if (manifest is null
+            || manifest.SchemaVersion != 1
+            || expectedVersion is null
+            || !SemanticVersion.TryParse(manifest.Version, out var manifestVersion)
+            || manifestVersion.CompareTo(expectedVersion) != 0
+            || !UpdateChannelPolicy.Includes(channel, manifestVersion)
+            || !string.Equals(manifest.Version, expectedTag.TrimStart('v'), StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var deployment = AppBuildInfo.Deployment.ToSlug();
+        var asset = manifest.Assets.FirstOrDefault(item =>
+            string.Equals(item.Runtime, AppBuildInfo.Runtime, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(item.Deployment, deployment, StringComparison.OrdinalIgnoreCase));
+        if (asset is null)
+        {
+            return null;
+        }
+
+        return new UpdateCheckResult(
+            manifestVersion,
+            expectedTag,
+            string.IsNullOrWhiteSpace(releaseUrl) ? manifest.ReleaseUrl : releaseUrl,
+            asset);
+    }
+
+    private static Uri? CreateBaseUri(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)
+            || !Uri.TryCreate($"{value.Trim().TrimEnd('/')}/", UriKind.Absolute, out var uri)
+            || (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
+        {
+            return null;
+        }
+
+        return uri;
     }
 
     private sealed class GitHubRelease

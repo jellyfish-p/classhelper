@@ -329,7 +329,7 @@
                         <Grid>
                             <StackPanel>
                                 <TextBlock Text="固定名单" Style="{StaticResource PageTitle}" />
-                                <TextBlock Text="姓名必填；可粘贴文本，或从 XLSX / CSV 文件智能导入。" Margin="0,3,0,0" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="姓名或学号至少填写一项，也可以从 XLSX / CSV 文件智能导入。" Margin="0,3,0,0" Style="{StaticResource BodyText}" />
                             </StackPanel>
                             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
                                 <Button Style="{StaticResource SecondaryButton}"
@@ -350,26 +350,49 @@
                                 BorderThickness="1"
                                 CornerRadius="12">
                             <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <StackPanel>
-                                    <TextBlock Text="从表格粘贴" FontSize="12" FontWeight="SemiBold" Margin="1,0,0,7" />
-                                    <TextBox x:Name="RosterPasteBox"
+                                <TextBlock Text="批量生成学号"
+                                           FontSize="12.5"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1"
+                                            Margin="20,0,0,0"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                    <TextBox x:Name="NumberRangeStartTextBox"
+                                             Width="82"
                                              Style="{StaticResource InputTextBox}"
-                                             MinHeight="44"
-                                             AcceptsReturn="True"
-                                             TextWrapping="Wrap"
-                                             ToolTip="每行一人，可写为：姓名, 学号"
-                                             automation:AutomationProperties.Name="粘贴名单文本" />
+                                             Text="1"
+                                             TextAlignment="Center"
+                                             automation:AutomationProperties.Name="起始学号" />
+                                    <TextBlock Margin="10,0"
+                                               Text="至"
+                                               VerticalAlignment="Center"
+                                               Foreground="{StaticResource TextSecondaryBrush}" />
+                                    <TextBox x:Name="NumberRangeEndTextBox"
+                                             Width="82"
+                                             Style="{StaticResource InputTextBox}"
+                                             Text="50"
+                                             TextAlignment="Center"
+                                             automation:AutomationProperties.Name="结束学号" />
+                                    <Button Margin="12,0,0,0"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Content="生成列表"
+                                            Click="GenerateNumberRange_Click"
+                                            automation:AutomationProperties.Name="按学号区间生成名单" />
                                 </StackPanel>
-                                <Button Grid.Column="1"
-                                        Margin="12,23,0,0"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Content="预览内容"
-                                        VerticalAlignment="Top"
-                                        Click="PreviewRoster_Click" />
+                                <TextBlock Grid.Row="1"
+                                           Grid.ColumnSpan="2"
+                                           Text="按数字区间生成没有姓名的名单；填写前导零时会保留编号位数。"
+                                           Margin="0,6,0,0"
+                                           Style="{StaticResource BodyText}" />
                             </Grid>
                         </Border>
 
@@ -428,6 +451,23 @@
                                                                 ElementStyle="{StaticResource RosterCheckBox}"
                                                                 EditingElementStyle="{StaticResource RosterCheckBox}"
                                                                 Width="120" />
+                                        <DataGridTemplateColumn Header="操作"
+                                                                HeaderStyle="{StaticResource RosterCenteredColumnHeader}"
+                                                                IsReadOnly="True"
+                                                                Width="76">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Style="{StaticResource RosterDeleteButton}"
+                                                            ToolTip="删除此成员"
+                                                            Click="RemoveMember_Click"
+                                                            automation:AutomationProperties.Name="删除名单成员">
+                                                        <TextBlock Text="&#xE74D;"
+                                                                   FontFamily="Segoe Fluent Icons"
+                                                                   FontSize="14" />
+                                                    </Button>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
                                 <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" CornerRadius="0,0,13,13">
@@ -444,7 +484,7 @@
                                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE77B;" FontFamily="Segoe Fluent Icons" FontSize="26" Foreground="{StaticResource TextTertiaryBrush}" HorizontalAlignment="Center" />
                                         <TextBlock Text="名单还是空的" Margin="0,12,0,0" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" />
-                                        <TextBlock Text="新增成员、粘贴文本，或从文件导入。" Margin="0,5,0,0" Style="{StaticResource BodyText}" HorizontalAlignment="Center" />
+                                        <TextBlock Text="新增成员、生成学号区间，或从文件导入。" Margin="0,5,0,0" Style="{StaticResource BodyText}" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
                             </Grid>
@@ -535,7 +575,7 @@
                                         </Border>
                                         <StackPanel Grid.Column="1" Margin="12,0,24,0">
                                             <TextBlock Text="启动时检查更新" Style="{StaticResource SectionTitle}" />
-                                            <TextBlock Text="只读取公开的 GitHub Release，不上传名单、设置或设备信息。" Margin="0,4,0,0" Style="{StaticResource BodyText}" TextWrapping="Wrap" />
+                                            <TextBlock Text="优先使用 GitHub，连接失败时回退国内镜像；不会上传名单、设置或设备信息。" Margin="0,4,0,0" Style="{StaticResource BodyText}" TextWrapping="Wrap" />
                                         </StackPanel>
                                         <CheckBox x:Name="AutoCheckUpdatesCheckBox"
                                                   Grid.Column="2"
@@ -547,6 +587,10 @@
                                     </Grid>
                                     <Border Height="1" Background="{StaticResource BorderBrush}" />
                                     <Grid Margin="22">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
@@ -569,6 +613,14 @@
                                                 Style="{StaticResource SecondaryButton}"
                                                 Content="检查更新"
                                                 Click="CheckForUpdates_Click" />
+                                        <ProgressBar x:Name="UpdateDownloadProgressBar"
+                                                     Grid.Row="1"
+                                                     Grid.ColumnSpan="3"
+                                                     Margin="0,14,0,0"
+                                                     Minimum="0"
+                                                     Maximum="100"
+                                                     Visibility="Collapsed"
+                                                     Style="{StaticResource SlimProgressBar}" />
                                     </Grid>
                                 </StackPanel>
                             </Border>

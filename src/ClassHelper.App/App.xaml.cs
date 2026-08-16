@@ -12,6 +12,31 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        if (UpdateInstaller.IsApplyUpdateRequest(e.Args))
+        {
+            try
+            {
+                await UpdateInstaller.ApplyUpdateAsync(e.Args, CancellationToken.None);
+                Shutdown();
+            }
+            catch (Exception exception)
+            {
+                MessageBox.Show(
+                    $"更新安装失败，原程序会尽量保持不变。\n\n{exception.Message}",
+                    "课堂助手更新",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Shutdown(2);
+            }
+
+            return;
+        }
+
+        if (UpdateInstaller.IsCleanupUpdateRequest(e.Args))
+        {
+            await UpdateInstaller.CleanupUpdateAsync(e.Args, CancellationToken.None);
+        }
+
         try
         {
             var store = new JsonClassroomStore();

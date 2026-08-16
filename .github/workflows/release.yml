@@ -141,6 +141,7 @@ jobs:
           RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
           TARGET_RUNTIME: ${{ matrix.runtime }}
           DEPLOYMENT: ${{ matrix.deployment }}
+          OSS_PUBLIC_BASE_URL: ${{ vars.CLASSHELPER_OSS_BASE_URL }}
         run: |
           $selfContained = ($env:DEPLOYMENT -eq "self-contained").ToString().ToLowerInvariant()
           $publishArguments = @(
@@ -152,6 +153,7 @@ jobs:
             "--no-restore",
             "-p:Version=$env:RELEASE_VERSION",
             "-p:ClassHelperDeployment=$env:DEPLOYMENT",
+            "-p:ClassHelperOssBaseUrl=$env:OSS_PUBLIC_BASE_URL",
             "-p:PublishSingleFile=true",
             "-p:IncludeNativeLibrariesForSelfExtract=true",
             "-p:PublishTrimmed=false",
@@ -208,6 +210,7 @@ jobs:
           RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
           RELEASE_CHANNEL: ${{ needs.prepare.outputs.channel }}
           REPOSITORY: ${{ github.repository }}
+          OSS_PUBLIC_BASE_URL: ${{ vars.CLASSHELPER_OSS_BASE_URL }}
         run: |
           $tagSegment = [Uri]::EscapeDataString($env:RELEASE_TAG)
           $releaseUrl = "https://github.com/$env:REPOSITORY/releases/tag/$tagSegment"
@@ -228,6 +231,12 @@ jobs:
 
             $checksum = ((Get-Content -LiteralPath $checksumFile -Raw).Trim() -split '\s+')[0]
             $fileSegment = [Uri]::EscapeDataString($executable.Name)
+            $mirrorDownloadUrl = if ([string]::IsNullOrWhiteSpace($env:OSS_PUBLIC_BASE_URL)) {
+              ""
+            }
+            else {
+              "$($env:OSS_PUBLIC_BASE_URL.TrimEnd('/'))/releases/$tagSegment/$fileSegment"
+            }
             $assets += [ordered]@{
               runtime = $runtime
               deployment = $deployment
@@ -235,6 +244,7 @@ jobs:
               size = $executable.Length
               sha256 = $checksum
               downloadUrl = "$downloadBase/$fileSegment"
+              mirrorDownloadUrl = $mirrorDownloadUrl
             }
           }
 

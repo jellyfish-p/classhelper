@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,7 +16,10 @@ public partial class MainWindow : Window
     private readonly AppController _controller;
     private readonly MainViewModel _viewModel;
     private readonly GitHubUpdateService _updateService = new();
+    private readonly UpdateDownloadService _updateDownloadService = new();
     private UpdateCheckResult? _availableUpdate;
+    private UpdateDownloadResult? _downloadedUpdate;
+    private CancellationTokenSource? _updateDownloadCancellation;
     private bool _allowClose;
     private bool _automaticUpdateCheckStarted;
     private bool _settingsInitialized;
@@ -69,6 +71,9 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        _updateDownloadCancellation?.Cancel();
+        _updateDownloadCancellation?.Dispose();
+        _updateDownloadService.Dispose();
         _updateService.Dispose();
         base.OnClosed(e);
     }
@@ -88,6 +93,14 @@ public partial class MainWindow : Window
         _controller.ShowRollCall(RollCallMode.BalancedRound);
 
     private void AddMember_Click(object sender, RoutedEventArgs e) => _viewModel.AddRosterMember();
+
+    private void RemoveMember_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: RosterMemberRow member })
+        {
+            _viewModel.RemoveRosterMember(member);
+        }
+    }
 
     private async void SaveRoster_Click(object sender, RoutedEventArgs e)
     {
@@ -115,8 +128,28 @@ public partial class MainWindow : Window
         }
     }
 
-    private void PreviewRoster_Click(object sender, RoutedEventArgs e) =>
-        _viewModel.ImportRosterText(RosterPasteBox.Text);
+    private void GenerateNumberRange_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.Roster.Count > 0)
+        {
+            var confirmation = MessageBox.Show(
+                this,
+                "生成学号列表会替换当前编辑区中的名单，尚未保存的修改也会被清除。是否继续？",
+                "生成学号列表",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+            if (confirmation != MessageBoxResult.Yes)
+            {
+                return;
+            }
+        }
+
+        if (!_viewModel.GenerateNumberRange(NumberRangeStartTextBox.Text, NumberRangeEndTextBox.Text))
+        {
+            NumberRangeStartTextBox.Focus();
+            NumberRangeStartTextBox.SelectAll();
+        }
+    }
 
     private async void ImportRosterFile_Click(object sender, RoutedEventArgs e)
     {
@@ -214,8 +247,11 @@ public partial class MainWindow : Window
         }
 
         _viewModel.UpdateChannel = channel;
+        _updateDownloadCancellation?.Cancel();
         _availableUpdate = null;
+        _downloadedUpdate = null;
         DownloadUpdateButton.Visibility = Visibility.Collapsed;
+        UpdateDownloadProgressBar.Visibility = Visibility.Collapsed;
         UpdateStatusText.Text = "更新通道已更改，点击“检查更新”刷新结果";
         await SaveUpdatePreferencesAsync("更新通道已保存");
     }
@@ -236,20 +272,67 @@ public partial class MainWindow : Window
     private async void CheckForUpdates_Click(object sender, RoutedEventArgs e) =>
         await CheckForUpdatesAsync();
 
-    private void DownloadUpdate_Click(object sender, RoutedEventArgs e)
+    private async void DownloadUpdate_Click(object sender, RoutedEventArgs e)
     {
+        if (_updateDownloadCancellation is not null)
+        {
+            _updateDownloadCancellation.Cancel();
+            return;
+        }
+
         if (_availableUpdate is null)
         {
             return;
         }
 
+        var availableUpdate = _availableUpdate;
+
+        if (_downloadedUpdate is not null && File.Exists(_downloadedUpdate.FilePath))
+        {
+            ConfirmAndStartInstall(_downloadedUpdate);
+            return;
+        }
+
+        _updateDownloadCancellation = new CancellationTokenSource();
+        DownloadUpdateButton.Content = "取消下载";
+        CheckForUpdatesButton.IsEnabled = false;
+        UpdateDownloadProgressBar.Visibility = Visibility.Visible;
+        UpdateDownloadProgressBar.IsIndeterminate = true;
+        var progress = new Progress<UpdateDownloadProgress>(ReportDownloadProgress);
+
         try
         {
-            Process.Start(new ProcessStartInfo(_availableUpdate.Asset.DownloadUrl) { UseShellExecute = true });
+            _downloadedUpdate = await _updateDownloadService.DownloadAsync(
+                availableUpdate.Asset,
+                availableUpdate.Version,
+                progress,
+                _updateDownloadCancellation.Token);
+            UpdateDownloadProgressBar.IsIndeterminate = false;
+            UpdateDownloadProgressBar.Value = 100;
+            UpdateStatusText.Text = $"v{availableUpdate.Version} 已下载并通过 SHA-256 校验";
+            _viewModel.StatusMessage = "更新下载完成，等待安装";
+            DownloadUpdateButton.Content = "安装更新";
+            ConfirmAndStartInstall(_downloadedUpdate);
+        }
+        catch (OperationCanceledException)
+        {
+            UpdateStatusText.Text = "更新下载已取消";
+            _viewModel.StatusMessage = "已取消更新下载";
+            DownloadUpdateButton.Content = "重新下载";
+            UpdateDownloadProgressBar.Visibility = Visibility.Collapsed;
         }
         catch (Exception exception)
         {
-            _viewModel.StatusMessage = $"无法打开更新下载：{exception.Message}";
+            UpdateStatusText.Text = "更新下载失败，可以稍后重试";
+            _viewModel.StatusMessage = $"更新下载失败：{exception.Message}";
+            DownloadUpdateButton.Content = "重试下载";
+            UpdateDownloadProgressBar.Visibility = Visibility.Collapsed;
+        }
+        finally
+        {
+            _updateDownloadCancellation.Dispose();
+            _updateDownloadCancellation = null;
+            CheckForUpdatesButton.IsEnabled = true;
         }
     }
 
@@ -257,7 +340,9 @@ public partial class MainWindow : Window
     {
         CheckForUpdatesButton.IsEnabled = false;
         DownloadUpdateButton.Visibility = Visibility.Collapsed;
-        UpdateStatusText.Text = "正在连接 GitHub 检查更新…";
+        UpdateDownloadProgressBar.Visibility = Visibility.Collapsed;
+        _downloadedUpdate = null;
+        UpdateStatusText.Text = "正在检查更新（GitHub 优先，国内镜像备用）…";
 
         try
         {
@@ -273,6 +358,7 @@ public partial class MainWindow : Window
             }
 
             UpdateStatusText.Text = $"发现 v{_availableUpdate.Version}，已匹配 {AppBuildInfo.Runtime} · {DeploymentLabel()}";
+            DownloadUpdateButton.Content = "下载并安装";
             DownloadUpdateButton.Visibility = Visibility.Visible;
             _viewModel.StatusMessage = $"发现新版本 v{_availableUpdate.Version}";
         }
@@ -286,6 +372,87 @@ public partial class MainWindow : Window
             CheckForUpdatesButton.IsEnabled = true;
         }
     }
+
+    private void ReportDownloadProgress(UpdateDownloadProgress progress)
+    {
+        var sourceLabel = DownloadSourceLabel(progress.Source);
+        var received = FormatBytes(progress.BytesReceived);
+        if (progress.TotalBytes is > 0)
+        {
+            UpdateDownloadProgressBar.IsIndeterminate = false;
+            UpdateDownloadProgressBar.Value = Math.Clamp(
+                progress.BytesReceived * 100d / progress.TotalBytes.Value,
+                0,
+                100);
+            UpdateStatusText.Text = $"正在从 {sourceLabel} 下载 {received} / {FormatBytes(progress.TotalBytes.Value)}";
+        }
+        else
+        {
+            UpdateDownloadProgressBar.IsIndeterminate = true;
+            UpdateStatusText.Text = $"正在从 {sourceLabel} 下载 {received}";
+        }
+    }
+
+    private void ConfirmAndStartInstall(UpdateDownloadResult download)
+    {
+        if (_availableUpdate is null)
+        {
+            return;
+        }
+
+        var sourceLabel = DownloadSourceLabel(download.Source);
+        var confirmation = MessageBox.Show(
+            this,
+            $"v{_availableUpdate.Version} 已从 {sourceLabel} 下载并通过完整性校验。\n\n" +
+            "现在安装吗？课堂助手会短暂关闭，完成替换后自动重新启动。",
+            "安装课堂助手更新",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+        if (confirmation != MessageBoxResult.Yes)
+        {
+            UpdateStatusText.Text = $"v{_availableUpdate.Version} 已准备好，点击“安装更新”继续";
+            DownloadUpdateButton.Content = "安装更新";
+            return;
+        }
+
+        try
+        {
+            DownloadUpdateButton.IsEnabled = false;
+            DownloadUpdateButton.Content = "正在启动安装";
+            UpdateStatusText.Text = "正在启动更新安装程序…";
+            UpdateInstaller.StartInstall(download.FilePath, _availableUpdate.Asset.Sha256);
+            _controller.Exit();
+        }
+        catch (Exception exception)
+        {
+            DownloadUpdateButton.IsEnabled = true;
+            DownloadUpdateButton.Content = "安装更新";
+            UpdateStatusText.Text = "无法启动更新安装程序";
+            _viewModel.StatusMessage = $"安装更新失败：{exception.Message}";
+        }
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        string[] units = ["B", "KB", "MB", "GB"];
+        var value = (double)Math.Max(0, bytes);
+        var unitIndex = 0;
+        while (value >= 1024 && unitIndex < units.Length - 1)
+        {
+            value /= 1024;
+            unitIndex++;
+        }
+
+        return unitIndex == 0 ? $"{value:0} {units[unitIndex]}" : $"{value:0.0} {units[unitIndex]}";
+    }
+
+    private static string DownloadSourceLabel(UpdateDownloadSource source) => source switch
+    {
+        UpdateDownloadSource.GitHub => "GitHub",
+        UpdateDownloadSource.OssMirror => "国内镜像",
+        UpdateDownloadSource.LocalCache => "本地缓存",
+        _ => "未知来源"
+    };
 
     private async Task SaveUpdatePreferencesAsync(string successMessage)
     {

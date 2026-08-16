@@ -16,12 +16,17 @@
     <Version>0.1.0</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <ClassHelperDeployment Condition="'$(ClassHelperDeployment)' == ''">framework-dependent</ClassHelperDeployment>
+    <ClassHelperOssBaseUrl Condition="'$(ClassHelperOssBaseUrl)' == ''"></ClassHelperOssBaseUrl>
   </PropertyGroup>
 
   <ItemGroup>
     <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
       <_Parameter1>ClassHelperDeployment</_Parameter1>
       <_Parameter2>$(ClassHelperDeployment)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>ClassHelperOssBaseUrl</_Parameter1>
+      <_Parameter2>$(ClassHelperOssBaseUrl)</_Parameter2>
     </AssemblyAttribute>
   </ItemGroup>
 

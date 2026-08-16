@@ -58,8 +58,12 @@ public partial class RollCallWindow : Window
         }
 
         var selected = _session.Draw();
-        ResultNameText.Text = selected.Name;
-        ResultNumberText.Text = string.IsNullOrWhiteSpace(selected.Number) ? string.Empty : $"学号 / 座号 {selected.Number}";
+        ResultNameText.Text = selected.DisplayLabel;
+        ResultNumberText.Text = string.IsNullOrWhiteSpace(selected.Name)
+            ? "学号 / 座号"
+            : string.IsNullOrWhiteSpace(selected.Number)
+                ? string.Empty
+                : $"学号 / 座号 {selected.Number}";
         HintText.Text = "本次抽取结果";
         RefreshRemaining();
 

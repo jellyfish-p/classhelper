@@ -7,14 +7,14 @@
 当前可用：
 
 - WPF 主控面板；
-- 固定名单的新增、粘贴预览、启用/停用与本地保存；
+- 固定名单的新增、删除、学号区间生成、启用/停用与本地保存；
 - 独立随机和均衡轮选两种点名方式；
 - 始终置顶、可拖动并自动吸边的快捷启动器；
 - 当前 Windows 用户可选开机自启；
-- 按 Alpha、Beta、预发行和稳定版通道自动检查更新；
+- 按 Alpha、Beta、预发行和稳定版通道自动检查更新，并在应用内下载、校验和安装；
 - 本地 JSON 数据文件和原子写入。
 
-课程表、节假日、教学日历和桌面课程栏由 ClassIsland 提供，本项目不再实现。多屏增强、SQLite 和安装器暂未接入。
+课程表、节假日、教学日历和桌面课程栏由 ClassIsland 提供，本项目不再实现。多屏增强、SQLite 和独立安装器暂未接入。
 
 ### 运行
 
@@ -63,7 +63,19 @@ Alpha、Beta 和 Preview 标签会发布为 GitHub Prerelease；RC 标签和无�
 
 推送标签后会通过 GitHub Actions 原生矩阵生成六种单文件 EXE：`win-x64`、`win-x86`、`win-arm64` 分别提供内含 .NET 的自包含版和需要预装 .NET 10 Desktop Runtime 的框架依赖版。Release 同时包含每个 EXE 的 SHA-256 校验文件，以及供客户端检查更新的 `update-manifest.json`。
 
-更新通道按稳定程度向下包含：Alpha 接收全部版本，Beta 接收 Beta、预发行和稳定版，预发行接收 RC/Preview 和稳定版，Stable 只接收稳定版。首次运行默认采用当前安装版本所属层级，也可以在设置中更改。更新检查只读取公开的 GitHub Releases，不上传本地数据。
+更新通道按稳定程度向下包含：Alpha 接收全部版本，Beta 接收 Beta、预发行和稳定版，预发行接收 RC/Preview 和稳定版，Stable 只接收稳定版。首次运行默认采用当前安装版本所属层级，也可以在设置中更改。更新检查只读取公开的发布信息，不上传本地数据。客户端优先使用 GitHub；连接失败时可回退 OSS，并在下载后校验发布清单记录的 SHA-256，再退出旧版本、就地替换和自动重启。
+
+国内 OSS 镜像是可选配置。将仓库变量 `CLASSHELPER_OSS_BASE_URL` 设置为公开 HTTPS 根地址后，发布产物会内置该地址，更新清单也会为每个 EXE 写入 `mirrorDownloadUrl`。OSS 对象按以下结构同步：
+
+```text
+releases/<tag>/<release asset>
+channels/alpha/update-manifest.json
+channels/beta/update-manifest.json
+channels/prerelease/update-manifest.json
+channels/stable/update-manifest.json
+```
+
+版本资源只需上传一次；各通道固定路径保存该通道当前最新兼容版本的清单。未配置 OSS 时，GitHub 检查、应用内下载和安装仍会正常工作。开发环境也可以通过 `CLASSHELPER_OSS_BASE_URL` 环境变量临时覆盖镜像根地址。
 
 也可以先在 GitHub 中发布同格式标签的 Release，工作流会自动构建并补充产物；失败时可从 Actions 页面输入已有标签手动重跑。
 
